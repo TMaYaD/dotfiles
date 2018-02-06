@@ -1,0 +1,40 @@
+# Lines configured by zsh-newuser-install
+HISTFILE=~/.histfile
+HISTSIZE=1000
+SAVEHIST=1000
+setopt incappendhistory autocd beep extendedglob nomatch notify
+bindkey -v
+# End of lines configured by zsh-newuser-install
+# The following lines were added by compinstall
+zstyle :compinstall filename '/home/phoenix/.zshrc'
+
+autoload -Uz compinit
+compinit
+# End of lines added by compinstall
+setopt AUTO_PUSHD PUSHD_IGNORE_DUPS
+setopt ALWAYS_TO_END AUTO_LIST
+setopt CORRECT INTERACTIVE_COMMENTS
+
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
+source <(antibody init)
+
+antibody bundle << BUNDLES_END
+  nojhan/liquidprompt
+  zsh-users/zsh-syntax-highlighting
+  Tarrasch/zsh-autoenv
+  zsh-users/zsh-completions
+  jocelynmallon/zshmarks
+  tarruda/zsh-autosuggestions
+  wbingli/zsh-wakatime
+  jimhester/per-directory-history
+BUNDLES_END
+
+# bindkey '^\r' autosuggest-execute-suggestion
+[ -f ${HOME}/.zshalias ] && source ${HOME}/.zshalias
+
+# Load rbenv
+eval "$(rbenv init -)"
+
+# Load iterm2 shell integration
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
