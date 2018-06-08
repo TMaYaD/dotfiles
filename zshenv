@@ -10,3 +10,5 @@ export LANG=en_US.UTF-8
 export AIRFLOW_HOME=$HOME/.airflow
 
 [ -f $HOME/.zshsecrets ] && source $HOME/.zshsecrets
+
+export PIPENV_VENV_IN_PROJECT=1
