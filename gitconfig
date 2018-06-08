@@ -1,0 +1,15 @@
+[user]
+	email = TMaYaD@LoonyB.in
+	name = Subhash Chandra
+[push]
+	default = simple
+[core]
+	excludesfile = ~/.dotfiles/global_ignore
+	autocrlf = input
+	editor = atom --wait
+[filter "media"]
+	required = true
+	clean = git media clean %f
+	smudge = git media smudge %f
+[merge]
+	tool = vimdiff2
