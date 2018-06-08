@@ -1,0 +1,6 @@
+Install
+-------
+
+Read, then run the script:
+
+  bash <(curl -s https://raw.githubusercontent.com/tmayad/dotvim/master/install.sh) 2>&1 | tee ~/dotvim.log
