@@ -34,7 +34,7 @@ BUNDLES_END
 [ -f ${HOME}/.zshalias ] && source ${HOME}/.zshalias
 
 # Load rbenv
-eval "$(rbenv init -)"
+# eval "$(rbenv init -)"
 
 # Load iterm2 shell integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
