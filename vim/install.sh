@@ -4,16 +4,23 @@ if [ ! -n "$DOTVIM" ]; then
   DOTVIM=~/.vim
 fi
 
+if [ ! -n "$DOTFILES" ]; then
+  DOTFILES=~/.dotfiles
+fi
+
 if [ -d "$DOTVIM" ]; then
   echo "\033[0;33mYou already have vim dotfiles installed.\033[0m You'll need to remove $DOTVIM if you want to install"
   exit
 fi
 
-echo "\033[0;34mCloning Vim dotfiles...\033[0m"
-hash git >/dev/null 2>&1 && env git clone https://github.com/TMaYaD/dotvim.git $DOTVIM || {
-  echo "git not installed"
-  exit
-}
+if [ ! -d "$DOTFILES" ]; then
+  echo "\033[0;34mCloning Vim dotfiles...\033[0m"
+  hash git >/dev/null 2>&1 && env git clone https://github.com/TMaYaD/dotfiles.git $DOTFILES || {
+    echo "git not installed"
+    exit
+  }
+fi
+ln -s $DOTFILES/vim $DOTVIM
 
 echo "\033[0;34mLooking for an existing vimrc...\033[0m"
 if [ -f ~/.vimrc ] || [ -h ~/.vimrc ]; then
