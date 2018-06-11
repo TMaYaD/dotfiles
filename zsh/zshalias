@@ -27,3 +27,7 @@ keep-trying(){
     countdown 10 "Retrying in"
   done
 }
+
+alias kf="kubectl --namespace finn"
+alias ks="kubectl --namespace staging"
+alias kp="kubectl --namespace production"
