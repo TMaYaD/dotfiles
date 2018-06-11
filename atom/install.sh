@@ -25,7 +25,7 @@ echo "\033[0;34mSymlinking atom dotfiles...\033[0m"
 ln -s $DOTFILES/atom $DOTATOM
 
 echo "\033[0;34mInstalling package-sync plugin...\033[0m"
-apm install package-sync || {
+apm install manage-packages || {
   echo "atom not installed"
   exit
 }
