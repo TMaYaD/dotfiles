@@ -31,10 +31,12 @@ antibody bundle << BUNDLES_END
 BUNDLES_END
 
 # bindkey '^\r' autosuggest-execute-suggestion
-[ -f ${HOME}/.zshalias ] && source ${HOME}/.zshalias
 
 # Load rbenv
 # eval "$(rbenv init -)"
 
 # Load iterm2 shell integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc'
+source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc'
