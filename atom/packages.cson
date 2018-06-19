@@ -1,9 +1,12 @@
 packages: [
   "atom-beautify"
   "auto-update-packages"
+  "bottom-dock"
+  "busy-signal"
   "clipboard-plus"
   "ex-mode"
   "file-icons"
+  "intentions"
   "language-docker"
   "language-ini"
   "language-pgsql"

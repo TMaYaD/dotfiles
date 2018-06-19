@@ -1,10 +1,16 @@
 "*":
+  "atom-beautify":
+    general:
+      _analyticsUserId: "8fddf399-a1a4-4ae9-b75b-549e2173d2f7"
   core:
     telemetryConsent: "limited"
+  editor: {}
   "exception-reporting":
     userId: "3f533768-f762-4717-8acd-455f0d5eec11"
   "package-sync":
     createOnChange: true
     forceOverwrite: true
+  wakatime:
+    apikey: "Enter your api key..."
   welcome:
     showOnStartup: false
