@@ -3,6 +3,9 @@ alias a="atom"
 alias gp="git push"
 alias be="bundle exec"
 
+alias py="pipenv run python"
+alias pym="pipenv run python manage.py"
+
 alias sort_photos="exiftool -r '-Directory<DateTimeOriginal' -d '%Y-%m-%d'"
 
 function countdown(){
