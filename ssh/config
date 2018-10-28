@@ -1,2 +1,2 @@
 Host github.com
-  IdentityFile ~/.ssh/github_rsA
+  IdentityFile ~/.ssh/github_rsa
