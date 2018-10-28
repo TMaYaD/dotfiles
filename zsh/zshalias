@@ -34,3 +34,7 @@ keep-trying(){
 alias kf="kubectl --namespace finn"
 alias ks="kubectl --namespace staging"
 alias kp="kubectl --namespace production"
+
+alias tf="terraform"
+
+alias k8s-secret-decode='jq ".data | to_entries | map({(.key): (.value | @base64d)})"'

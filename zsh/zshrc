@@ -28,6 +28,7 @@ antibody bundle << BUNDLES_END
   tarruda/zsh-autosuggestions
   wbingli/zsh-wakatime
   jimhester/per-directory-history
+  junegunn/fzf
 BUNDLES_END
 
 # bindkey '^\r' autosuggest-execute-suggestion
