@@ -25,5 +25,5 @@ if [ -f ~/.zshenv ] || [ -h ~/.zshenv ]; then
 fi
 
 echo "\033[0;34mSymlinking rc files...\033[0m"
-ln -s $DOTVIM/zsh/zshrc ~/.zshrc
-ln -s $DOTVIM/zsh/zshenv ~/.zshenv
+ln -s $DOTFILES/zsh/zshrc ~/.zshrc
+ln -s $DOTFILES/zsh/zshenv ~/.zshenv
