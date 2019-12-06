@@ -25,10 +25,13 @@ function stopwatch(){
 }
 
 keep-trying(){
+  attempt=0
   until $*
   do
+    echo Attempt: $((++attempt))
     countdown 10 "Retrying in"
   done
+  echo Succedded after $attempt attempts
 }
 
 alias kf="kubectl --namespace finn"
