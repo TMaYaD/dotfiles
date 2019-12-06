@@ -2,7 +2,7 @@
 HISTFILE=~/.histfile
 HISTSIZE=1000
 SAVEHIST=1000
-setopt incappendhistory autocd beep extendedglob nomatch notify histignorespace
+setopt incappendhistory autocd beep extendedglob nomatch notify histignorespace histignoredups
 bindkey -v
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
@@ -34,10 +34,11 @@ BUNDLES_END
 # bindkey '^\r' autosuggest-execute-suggestion
 
 # Load rbenv
-# eval "$(rbenv init -)"
+eval "$(rbenv init -)"
 
 # Load iterm2 shell integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
 source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/path.zsh.inc'
 source '/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.zsh.inc'
+
