@@ -38,7 +38,9 @@ BUNDLES_END
 # bindkey '^\r' autosuggest-execute-suggestion
 
 # Load rbenv
-eval "$(rbenv init -)"
+if type rbenv &>/dev/null; then
+  eval "$(rbenv init -)"
+fi
 
 # Load iterm2 shell integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
