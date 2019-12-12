@@ -3,12 +3,9 @@ WAKATIME_USE_DIRNAME=true
 # Set PATH
 #
 [ -d /usr/local/sbin ] && PATH=/usr/local/sbin:$PATH
+[ -d /usr/local/opt/libpq/bin ] && PATH=$PATH:/usr/local/opt/libpq/bin
 [ -d $HOME/.local/bin ] && PATH=$HOME/.local/bin:$PATH
 [ -d $HOME/.go ] && export GOPATH=$HOME/.go && PATH=$GOPATH/bin:$PATH
-
-for libpq in /usr/local/Cellar/libpq/*; do
-  PATH=$PATH:$libpq/bin
-done
 export PATH
 
 export ANDROID_HOME=/usr/local/opt/android-sdk
