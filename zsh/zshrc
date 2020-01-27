@@ -12,8 +12,8 @@ if type brew &>/dev/null; then
   FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
 fi
 
-autoload -Uz compinit
-compinit
+autoload -Uz compinit && compinit -u
+
 # End of lines added by compinstall
 setopt AUTO_PUSHD PUSHD_IGNORE_DUPS
 setopt ALWAYS_TO_END AUTO_LIST
