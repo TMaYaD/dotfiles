@@ -3,6 +3,7 @@ alias a="atom"
 alias gp="git push"
 alias be="bundle exec"
 
+alias hana="bundle exec hanami"
 alias py="pipenv run python"
 alias pym="pipenv run python manage.py"
 
