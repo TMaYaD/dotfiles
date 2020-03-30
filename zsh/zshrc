@@ -46,3 +46,4 @@ fi
 # Load iterm2 shell integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
+export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
