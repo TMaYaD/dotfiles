@@ -33,6 +33,7 @@ antibody bundle << BUNDLES_END
   wbingli/zsh-wakatime
   jimhester/per-directory-history
   junegunn/fzf
+  sobolevn/wakatime-zsh-plugin
 BUNDLES_END
 
 # bindkey '^\r' autosuggest-execute-suggestion
