@@ -757,14 +757,14 @@
 	<key>NoSyncFrame_SharedPreferences</key>
 	<dict>
 		<key>screenFrame</key>
-		<string>{{1920, 0}, {1920, 1080}}</string>
+		<string>{{0, 0}, {2560, 1440}}</string>
 		<key>topLeft</key>
-		<string>{2558, 845}</string>
+		<string>{269, 621}</string>
 	</dict>
 	<key>NoSyncInstallationId</key>
 	<string>B7D0BB78-D281-41C5-87AC-DF34C1AED44A</string>
 	<key>NoSyncLaunchExperienceControllerRunCount</key>
-	<integer>12</integer>
+	<integer>14</integer>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile</key>
 	<true/>
 	<key>NoSyncNeverRemindPrefsChangesLostForFile_selection</key>
@@ -1467,6 +1467,8 @@
 	</dict>
 	<key>NoSyncTipOfTheDayEligibilityBeganTime</key>
 	<real>605149715.58117497</real>
+	<key>OnlyWhenMoreTabs</key>
+	<false/>
 	<key>OpenArrangementAtStartup</key>
 	<false/>
 	<key>OpenNewWindowAtStartup</key>
@@ -1519,7 +1521,7 @@
 	<key>SUHasLaunchedBefore</key>
 	<true/>
 	<key>SULastCheckTime</key>
-	<date>2020-03-30T06:01:11Z</date>
+	<date>2020-06-08T03:29:51Z</date>
 	<key>SUSendProfileInfo</key>
 	<false/>
 	<key>SUUpdateRelaunchingMarker</key>
