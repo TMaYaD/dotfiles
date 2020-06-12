@@ -1,3 +1,5 @@
+#! env zsh
+
 set -e
 
 if [ ! -n "$DOTVIM" ]; then

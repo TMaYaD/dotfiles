@@ -1,3 +1,5 @@
+#! env zsh
+
 if [ ! -n "$DOTFILES" ]; then
   DOTFILES=~/.dotfiles
 fi
