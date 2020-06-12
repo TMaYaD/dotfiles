@@ -31,6 +31,5 @@ Bundle 'jpo/vim-railscasts-theme'
 Bundle 'slim-template/vim-slim'
 Bundle 'tpope/vim-surround'
 Bundle 'tpope/vim-vividchalk'
-Bundle 'wakatime/vim-wakatime'
 
 filetype plugin indent on " required!
