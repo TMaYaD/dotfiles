@@ -6,6 +6,7 @@ WAKATIME_USE_DIRNAME=true
 [ -d /usr/local/opt/libpq/bin ] && PATH=$PATH:/usr/local/opt/libpq/bin
 [ -d $HOME/.local/bin ] && PATH=$HOME/.local/bin:$PATH
 [ -d $HOME/.go ] && export GOPATH=$HOME/.go && PATH=$GOPATH/bin:$PATH
+[ -d $HOME/.poetry ] && export PATH=$HOME/.poetry/bin:$PATH
 export PATH
 
 export ANDROID_HOME=/usr/local/opt/android-sdk
