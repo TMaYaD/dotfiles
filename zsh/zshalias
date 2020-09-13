@@ -42,3 +42,11 @@ alias kp="kubectl --namespace production"
 alias tf="terraform"
 
 alias k8s-secret-decode='jq ".data | to_entries | map({(.key): (.value | @base64d)})"'
+
+if ! [ -x "$(command -v pbcopy)" ]; then
+  alias pbcopy='xclip -selection clipboard'
+fi
+
+if ! [ -x "$(command -v pbpaste)" ]; then
+  alias pbpaste='xclip -selection clipboard -o'
+fi
