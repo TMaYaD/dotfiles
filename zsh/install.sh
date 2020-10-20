@@ -14,6 +14,11 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
+echo "\033[0;34mInstalling antibody...\033[0m"
+if ! type "antibody" > /dev/null; then
+  brew install antibody
+fi
+
 echo "\033[0;34mLooking for an existing zshrc...\033[0m"
 if [ -f ~/.zshrc ] || [ -h ~/.zshrc ]; then
   echo "\033[0;33mFound ~/.zshrc.\033[0m \033[0;32mBacking up to ~/.zshrc.pre-dotzsh\033[0m";
