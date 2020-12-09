@@ -43,16 +43,20 @@ cask-install "iTerm" iterm2
 cask-install "Karabiner-Elements" karabiner-elements
 cask-install "Time Out" time-out
 cask-install "Visual Studio Code" visual-studio-code
-cask-install "Little Snitch Configuration" little-snitch
+cask-install "Little Snitch" little-snitch
 cask-install "Google Chrome" google-chrome
 cask-install "1Password 7" 1password
 cask-install "Slack" slack
 cask-install "Notion" notion
+cask-install "Postico" postico
+cask-install "Telegram" telegram
+cask-install "Postman" postman
 
 brew-install rbenv rbenv
 brew-install pyenv pyenv
 brew-install poetry poetry
 brew-install gcloud google-cloud-sdk
+brew-install node node
 
 
 
