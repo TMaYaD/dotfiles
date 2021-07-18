@@ -9,6 +9,20 @@ else
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 fi
 
+function brew-install() {
+  package=$1
+  bin="${2:-$1}"
+
+  if [ -d "/Applications/$bin.app" ] || (( $+commands[$bin] )); then
+    echo "\033[0;34mSkipping $package...\033[0m"
+  else
+    echo "\033[0;34mInstalling $package...\033[0m"
+    brew install $package
+  fi
+}
+
+brew-install git
+
 if [ ! -n "$DOTFILES" ]; then
   DOTFILES=~/.dotfiles
 fi
@@ -21,42 +35,36 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
-function cask-install() {
-  if [ -d "/Applications/$1.app" ]; then
-    echo "\033[0;34mSkipping $1...\033[0m"
+brew-install 1password "1Password 7"
+brew-install google-chrome "Google Chrome"
+brew-install google-cloud-sdk gcloud
+brew-install iterm2 "iTerm"
+brew-install karabiner-elements "Karabiner-Elements"
+brew-install little-snitch "Little Snitch"
+brew-install node
+brew-install notion "Notion"
+brew-install poetry
+brew-install postico "Postico"
+brew-install postman "Postman"
+brew-install pyenv
+brew-install rbenv
+brew-install slack "Slack"
+brew-install telegram "Telegram"
+brew-install time-out "Time Out"
+brew-install visual-studio-code "Visual Studio Code"
+
+for installer in $DOTFILES/*/install.sh
+do
+  directory=$(dirname $installer)
+  package=$(basename $directory)
+
+  if [[ -x "$installer" ]]
+  then
+    echo "\033[0;34msetting up $package...\033[0m"
+    pushd $directory
+    ./install.sh
+    popd
   else
-    echo "\033[0;34mInstalling $1...\033[0m"
-    brew cask install $2
+    echo "\033[0;34mSkipping $package...\033[0m"
   fi
-}
-
-function brew-install() {
-  if (( $+commands[$1] )); then
-    echo "\033[0;34mSkipping $1...\033[0m"
-  else
-    echo "\033[0;34mInstalling $1...\033[0m"
-    brew install $2
-  fi
-}
-
-cask-install "iTerm" iterm2
-cask-install "Karabiner-Elements" karabiner-elements
-cask-install "Time Out" time-out
-cask-install "Visual Studio Code" visual-studio-code
-cask-install "Little Snitch" little-snitch
-cask-install "Google Chrome" google-chrome
-cask-install "1Password 7" 1password
-cask-install "Slack" slack
-cask-install "Notion" notion
-cask-install "Postico" postico
-cask-install "Telegram" telegram
-cask-install "Postman" postman
-
-brew-install rbenv rbenv
-brew-install pyenv pyenv
-brew-install poetry poetry
-brew-install gcloud google-cloud-sdk
-brew-install node node
-
-
-
+done
