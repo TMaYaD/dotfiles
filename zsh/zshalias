@@ -7,7 +7,7 @@ alias hana="bundle exec hanami"
 alias py="pipenv run python"
 alias pym="pipenv run python manage.py"
 
-alias sort_photos="exiftool -r '-Directory<DateTimeOriginal' -d '%Y-%m-%d'"
+alias sort_photos="exiftool -r -d '%%e/%Y-%m-%d' '-Directory<FileModifyDate' '-Directory<CreateDate' '-Directory<DateTimeOriginal' -progress -progress:"
 
 function countdown(){
    date1=$((`date +%s` + $1));
