@@ -1,0 +1,327 @@
+{
+  "title": "Caps Lock To Shift Lock",
+  "rules": [
+     {
+        "description": "Change caps lock to shift lock",
+        "manipulators": [
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "caps_lock",
+                    "modifiers": {
+                        "mandatory": ["shift"]
+                    }
+                },
+                "to": [
+                    {
+                        "set_variable": {
+                            "name": "shift_lock",
+                            "value": 1
+                        }
+                    },
+                    {
+                        "key_code": "caps_lock"
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "caps_lock",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                        ]
+                    }
+                },
+                "to": [
+                    {
+                        "set_variable": {
+                            "name": "shift_lock",
+                            "value": 0
+                        }
+                    },
+                    {
+                        "key_code": "caps_lock"
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "description": " => shift-1/!",
+                "type": "basic",
+                "from": {
+                    "key_code": "1",
+                    "modifiers": {
+                         "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "1",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "2",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "2",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "3",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "3",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "4",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "4",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "5",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "5",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "6",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "6",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "7",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "7",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "8",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "8",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "9",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "9",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "type": "basic",
+                "from": {
+                    "key_code": "0",
+                    "modifiers": {
+                        "optional": [
+                            "any"
+                         ]
+                    }
+                },
+                "to": [
+                    {
+                        "key_code": "0",
+                        "modifiers": [
+                            "shift"
+                        ]
+                    }
+                ],
+                "conditions": [
+                    {
+                        "type": "variable_if",
+                        "name": "shift_lock",
+                        "value": 1
+                    }
+                ]
+            }
+        ]
+     }
+  ]
+}
