@@ -6,7 +6,7 @@ if (( $+commands[brew] )); then
   echo "\033[0;34mSkipping Homebrew...\033[0m"
 else
   echo "\033[0;34mInstalling Homebrew...\033[0m"
-  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
 function brew-install() {
