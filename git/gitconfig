@@ -4,7 +4,7 @@
 [push]
 	default = simple
 [core]
-	excludesfile = ~/.dotfiles/global_ignore
+	excludesfile = ~/.dotfiles/git/global_ignore
 	autocrlf = input
 	editor = code --wait
 [filter "media"]
