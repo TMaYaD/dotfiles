@@ -36,11 +36,15 @@ if [ ! -d "$DOTFILES" ]; then
 fi
 
 brew-install 1password "1Password 7"
+brew-install gh
 brew-install golang go
 brew-install google-chrome "Google Chrome"
 brew-install google-cloud-sdk gcloud
+brew-install hub
 brew-install iterm2 "iTerm"
 brew-install karabiner-elements "Karabiner-Elements"
+brew-install kubectl
+brew-install kustomize
 brew-install little-snitch "Little Snitch"
 brew-install node
 brew-install notion "Notion"
@@ -51,6 +55,7 @@ brew-install pyenv
 brew-install rbenv
 brew-install slack "Slack"
 brew-install telegram "Telegram"
+brew-install tig
 brew-install time-out "Time Out"
 brew-install visual-studio-code "Visual Studio Code"
 
