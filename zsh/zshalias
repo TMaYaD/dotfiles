@@ -9,6 +9,8 @@ alias pym="pipenv run python manage.py"
 
 alias sort_photos="exiftool -r -d '%%e/%Y-%m-%d' '-Directory<FileModifyDate' '-Directory<CreateDate' '-Directory<DateTimeOriginal' -progress -progress:"
 
+(( $+commands[nerdctl] )) && alias docker=nerdctl
+
 function countdown(){
    date1=$((`date +%s` + $1));
    shift

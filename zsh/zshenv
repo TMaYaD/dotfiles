@@ -1,17 +1,21 @@
 WAKATIME_USE_DIRNAME=true
 
+BREW_PREFIX=$(brew --prefix)
+
 # Set PATH
 #
-[ -d /usr/local/sbin ] && PATH=/usr/local/sbin:$PATH
-[ -d /usr/local/opt/libpq/bin ] && PATH=$PATH:/usr/local/opt/libpq/bin
+[ -d ${BREW_PREFIX}/sbin ] && PATH=${BREW_PREFIX}/sbin:$PATH
+[ -d ${BREW_PREFIX}/opt/libpq/bin ] && PATH=$PATH:${BREW_PREFIX}/opt/libpq/bin
 [ -d $HOME/.local/bin ] && PATH=$HOME/.local/bin:$PATH
+[ -d $HOME/.rd/bin ] && PATH=$HOME/.rd/bin:$PATH
 [ -d $HOME/.go ] && export GOPATH=$HOME/.go && PATH=$GOPATH/bin:$PATH
-[ -d $HOME/.rbenv ] && export PATH=$HOME/.rbenv/bin:$PATH
-[ -d $HOME/.pyenv ] && export PATH=$HOME/.pyenv/bin:$PATH
-[ -d $HOME/.poetry ] && export PATH=$HOME/.poetry/bin:$PATH
+[ -d $HOME/.poetry ] && PATH=$HOME/.poetry/bin:$PATH
+[ -d $HOME/.pyenv ] && PATH=$HOME/.pyenv/bin:$PATH
+[ -d $HOME/.rbenv ] && PATH=$HOME/.rbenv/bin:$PATH
+[ -d $HOME/.n ] && export N_PREFIX=$HOME/.n && PATH=$HOME/.n/bin:$PATH
 export PATH
 
-export ANDROID_HOME=/usr/local/opt/android-sdk
+export ANDROID_HOME=${BREW_PREFIX}/opt/android-sdk
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
