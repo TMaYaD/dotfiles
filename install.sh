@@ -35,10 +35,9 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
-brew-install 1password "1Password 7"
+brew-install brave-browser "Brave Browser"
 brew-install gh
 brew-install golang go
-brew-install google-chrome "Google Chrome"
 brew-install google-cloud-sdk gcloud
 brew-install hub
 brew-install iterm2 "iTerm"
