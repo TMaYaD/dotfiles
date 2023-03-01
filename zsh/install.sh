@@ -14,9 +14,9 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
-echo "\033[0;34mInstalling antibody...\033[0m"
-if ! type "antibody" > /dev/null; then
-  brew install antibody
+echo "\033[0;34mInstalling antidote...\033[0m"
+if ! type "antidote" > /dev/null; then
+  brew install antidote
 fi
 
 echo "\033[0;34mLooking for an existing zshrc...\033[0m"
@@ -34,3 +34,4 @@ fi
 echo "\033[0;34mSymlinking rc files...\033[0m"
 ln -s $DOTFILES/zsh/zshrc ~/.zshrc
 ln -s $DOTFILES/zsh/zshenv ~/.zshenv
+ln -s $DOTFILES/zsh/zsh_plugins.txt ~/.zsh_plugins.txt
