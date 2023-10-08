@@ -13,7 +13,7 @@ function brew-install() {
   package=$1
   bin="${2:-$1}"
 
-  if [ -d "/Applications/$bin.app" ] || (( $+commands[$bin] )); then
+  if [ -d "/Applications/$bin.app" ] || (( $+commands[$bin] )) ||  [ -d $bin ]; then
     echo "\033[0;34mSkipping $package...\033[0m"
   else
     echo "\033[0;34mInstalling $package...\033[0m"
@@ -44,7 +44,9 @@ brew-install iterm2 "iTerm"
 brew-install karabiner-elements "Karabiner-Elements"
 brew-install kubectl
 brew-install kustomize
+brew-install libpq psql
 brew-install little-snitch "Little Snitch"
+brew-install libpq /usr/local/opt/libpq/bin
 brew-install node
 brew-install notion "Notion"
 brew-install poetry
@@ -52,7 +54,6 @@ brew-install postico "Postico"
 brew-install postman "Postman"
 brew-install pyenv
 brew-install rbenv
-brew-install slack "Slack"
 brew-install telegram "Telegram"
 brew-install tig
 brew-install time-out "Time Out"
