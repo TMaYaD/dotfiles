@@ -3,6 +3,7 @@
 	name = Subhash Chandra
 [push]
 	default = simple
+	autoSetupRemote = true
 [core]
 	excludesfile = ~/.dotfiles/git/global_ignore
 	autocrlf = input
