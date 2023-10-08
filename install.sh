@@ -25,18 +25,13 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
+source $DOTFILES/helpers.func.zsh
 
-echo "\033[0;34mLooking for an existing Brewfile...\033[0m"
-if [ -f ~/.Brewfile ] || [ -h ~/.Brewfile ]; then
-  echo "\033[0;33mFound ~/.Brewfile.\033[0m \033[0;32mBacking up to ~/.Brewfile.pre-dot\033[0m";
-  mv ~/.Brewfile ~/.Brewfile.pre-dot;
-fi
-
-echo "\033[0;34mSymlinking Brewfile...\033[0m"
-ln -s $DOTFILES/Brewfile ~/.Brewfile
+install_config $DOTFILES/Brewfile ~/.Brewfile
 
 brew bundle --global
 
+# Run individual installers
 for installer in $DOTFILES/*/install.sh
 do
   directory=$(dirname $installer)
