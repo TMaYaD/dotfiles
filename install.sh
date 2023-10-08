@@ -47,9 +47,3 @@ do
     echo "\033[0;34mSkipping $package...\033[0m"
   fi
 done
-
-
-# Disable Apples nagging "Start using iCloud" notification badge in System Preferences
-defaults read com.apple.systempreferences AttentionPrefBundleIDs && \
-  defaults delete com.apple.systempreferences AttentionPrefBundleIDs
-
