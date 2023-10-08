@@ -9,19 +9,9 @@ else
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-function brew-install() {
-  package=$1
-  bin="${2:-$1}"
+eval "$(brew shellenv)"
 
-  if [ -d "/Applications/$bin.app" ] || (( $+commands[$bin] )) ||  [ -d $bin ]; then
-    echo "\033[0;34mSkipping $package...\033[0m"
-  else
-    echo "\033[0;34mInstalling $package...\033[0m"
-    brew install $package
-  fi
-}
-
-brew-install git
+(( $+commands[git] )) || brew install git
 
 if [ ! -n "$DOTFILES" ]; then
   DOTFILES=~/.dotfiles
@@ -35,30 +25,17 @@ if [ ! -d "$DOTFILES" ]; then
   }
 fi
 
-brew-install brave-browser "Brave Browser"
-brew-install fzf
-brew-install gh
-brew-install golang go
-brew-install google-cloud-sdk gcloud
-brew-install hub
-brew-install iterm2 "iTerm"
-brew-install karabiner-elements "Karabiner-Elements"
-brew-install kubectl
-brew-install kustomize
-brew-install libpq psql
-brew-install little-snitch "Little Snitch"
-brew-install libpq /usr/local/opt/libpq/bin
-brew-install node
-brew-install notion "Notion"
-brew-install poetry
-brew-install postico "Postico"
-brew-install postman "Postman"
-brew-install pyenv
-brew-install rbenv
-brew-install telegram "Telegram"
-brew-install tig
-brew-install time-out "Time Out"
-brew-install visual-studio-code "Visual Studio Code"
+
+echo "\033[0;34mLooking for an existing Brewfile...\033[0m"
+if [ -f ~/.Brewfile ] || [ -h ~/.Brewfile ]; then
+  echo "\033[0;33mFound ~/.Brewfile.\033[0m \033[0;32mBacking up to ~/.Brewfile.pre-dot\033[0m";
+  mv ~/.Brewfile ~/.Brewfile.pre-dot;
+fi
+
+echo "\033[0;34mSymlinking Brewfile...\033[0m"
+ln -s $DOTFILES/Brewfile ~/.Brewfile
+
+brew bundle --global
 
 for installer in $DOTFILES/*/install.sh
 do
