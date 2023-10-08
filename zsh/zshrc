@@ -50,3 +50,5 @@ done
 
 autoload -U zmv
 
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

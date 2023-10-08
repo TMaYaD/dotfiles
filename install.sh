@@ -36,6 +36,7 @@ if [ ! -d "$DOTFILES" ]; then
 fi
 
 brew-install brave-browser "Brave Browser"
+brew-install fzf
 brew-install gh
 brew-install golang go
 brew-install google-cloud-sdk gcloud

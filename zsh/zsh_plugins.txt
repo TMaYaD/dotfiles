@@ -6,4 +6,3 @@ zsh-users/zsh-completions
 jocelynmallon/zshmarks
 tarruda/zsh-autosuggestions
 jimhester/per-directory-history
-junegunn/fzf
