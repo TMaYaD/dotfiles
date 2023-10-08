@@ -8,14 +8,28 @@
 	<integer>2</integer>
 	<key>Default Bookmark Guid</key>
 	<string>7F8DF99B-4B18-4258-BE6F-592F819A2AAF</string>
+	<key>HTMLTabTitles</key>
+	<false/>
 	<key>HapticFeedbackForEsc</key>
 	<false/>
 	<key>HideFromDockAndAppSwitcher</key>
 	<true/>
 	<key>HideMenuBarInFullscreen</key>
 	<false/>
+	<key>Hotkey</key>
+	<false/>
+	<key>HotkeyChar</key>
+	<integer>32</integer>
+	<key>HotkeyCode</key>
+	<integer>49</integer>
 	<key>HotkeyMigratedFromSingleToMulti</key>
 	<true/>
+	<key>HotkeyModifiers</key>
+	<integer>524288</integer>
+	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF</key>
+	<true/>
+	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF_selection</key>
+	<integer>0</integer>
 	<key>New Bookmarks</key>
 	<array>
 		<dict>
@@ -277,7 +291,7 @@
 			<key>Horizontal Spacing</key>
 			<real>1</real>
 			<key>HotKey Activated By Modifier</key>
-			<false/>
+			<true/>
 			<key>HotKey Alternate Shortcuts</key>
 			<array/>
 			<key>HotKey Characters</key>
@@ -293,9 +307,9 @@
 			<key>HotKey Window Animates</key>
 			<true/>
 			<key>HotKey Window AutoHides</key>
-			<true/>
+			<false/>
 			<key>HotKey Window Dock Click Action</key>
-			<integer>0</integer>
+			<integer>2</integer>
 			<key>HotKey Window Floats</key>
 			<true/>
 			<key>HotKey Window Reopens On Activation</key>
@@ -665,6 +679,8 @@
 			<true/>
 			<key>Use Bright Bold</key>
 			<true/>
+			<key>Use Custom Tab Title</key>
+			<false/>
 			<key>Use Italic Font</key>
 			<true/>
 			<key>Use Non-ASCII Font</key>
@@ -722,13 +738,29 @@
 			<string>kNextWindowPointerAction</string>
 		</dict>
 	</dict>
-	<key>PreventEscapeSequenceFromClearingHistory</key>
-	<false/>
 	<key>PromptOnQuit</key>
 	<false/>
+	<key>SeparateStatusBarsPerPane</key>
+	<false/>
+	<key>ShowFullScreenTabBar</key>
+	<false/>
+	<key>ShowPaneTitles</key>
+	<true/>
 	<key>SoundForEsc</key>
 	<false/>
+	<key>StatusBarPosition</key>
+	<integer>1</integer>
+	<key>StretchTabsToFillBar</key>
+	<false/>
+	<key>TabStyleWithAutomaticOption</key>
+	<integer>5</integer>
+	<key>TabViewType</key>
+	<integer>1</integer>
+	<key>UIElementRequiresHotkeys</key>
+	<true/>
 	<key>VisualIndicatorForEsc</key>
 	<false/>
+	<key>findMode_iTerm</key>
+	<integer>0</integer>
 </dict>
 </plist>
