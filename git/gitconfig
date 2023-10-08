@@ -1,6 +1,7 @@
 [user]
 	email = TMaYaD@LoonyB.in
 	name = Subhash Chandra
+	signingkey = ~/.ssh/id_ed25519.pub
 [push]
 	default = simple
 	autoSetupRemote = true
@@ -23,3 +24,7 @@
 	defaultBranch = main
 [pull]
 	ff = only
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = true
