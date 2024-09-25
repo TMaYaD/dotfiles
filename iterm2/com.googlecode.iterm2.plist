@@ -6,6 +6,8 @@
 	<true/>
 	<key>AboutToPasteTabsWithCancel_selection</key>
 	<integer>2</integer>
+	<key>AlternateMouseScroll</key>
+	<true/>
 	<key>Default Bookmark Guid</key>
 	<string>7F8DF99B-4B18-4258-BE6F-592F819A2AAF</string>
 	<key>HTMLTabTitles</key>
@@ -26,6 +28,8 @@
 	<true/>
 	<key>HotkeyModifiers</key>
 	<integer>524288</integer>
+	<key>HotkeyWindowFloatsAboveOtherWindows</key>
+	<false/>
 	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF</key>
 	<true/>
 	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF_selection</key>
@@ -267,6 +271,8 @@
 			<string>No</string>
 			<key>Custom Directory</key>
 			<string>No</string>
+			<key>Custom Locale</key>
+			<string>en_US.UTF-8</string>
 			<key>Default Bookmark</key>
 			<string>No</string>
 			<key>Description</key>
@@ -288,6 +294,8 @@
 			<string>7F8DF99B-4B18-4258-BE6F-592F819A2AAF</string>
 			<key>Has Hotkey</key>
 			<true/>
+			<key>Hide After Opening</key>
+			<false/>
 			<key>Horizontal Spacing</key>
 			<real>1</real>
 			<key>HotKey Activated By Modifier</key>
@@ -313,7 +321,7 @@
 			<key>HotKey Window Floats</key>
 			<true/>
 			<key>HotKey Window Reopens On Activation</key>
-			<false/>
+			<true/>
 			<key>Idle Code</key>
 			<integer>0</integer>
 			<key>Jobs to Ignore</key>
@@ -661,10 +669,14 @@
 			</dict>
 			<key>Send Code When Idle</key>
 			<false/>
+			<key>Set Local Environment Vars</key>
+			<integer>2</integer>
 			<key>Shortcut</key>
 			<string></string>
 			<key>Silence Bell</key>
 			<false/>
+			<key>Space</key>
+			<integer>-1</integer>
 			<key>Sync Title</key>
 			<false/>
 			<key>Tags</key>

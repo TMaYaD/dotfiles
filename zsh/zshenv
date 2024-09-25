@@ -1,6 +1,6 @@
 WAKATIME_USE_DIRNAME=true
 
-BREW_PREFIX=$(brew --prefix)
+BREW_PREFIX=$(/opt/homebrew/bin/brew --prefix || /usr/local/bin/brew --prefix)
 
 # Set PATH
 #
@@ -13,6 +13,7 @@ BREW_PREFIX=$(brew --prefix)
 [ -d $HOME/.pyenv ] && PATH=$HOME/.pyenv/bin:$PATH
 [ -d $HOME/.rbenv ] && PATH=$HOME/.rbenv/bin:$PATH
 [ -d $HOME/.n ] && export N_PREFIX=$HOME/.n && PATH=$HOME/.n/bin:$PATH
+[ -d ${KREW_ROOT:-$HOME/.krew} ] && PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 export PATH
 
 export ANDROID_HOME=${BREW_PREFIX}/opt/android-sdk
