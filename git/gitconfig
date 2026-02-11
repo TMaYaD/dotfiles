@@ -2,6 +2,10 @@
 	email = TMaYaD@LoonyB.in
 	name = Subhash Chandra
 	signingkey = ~/.ssh/id_ed25519.pub
+[user]
+	email = TMaYaD+github@gmail.com
+	name = Subhash Chandra
+	signingkey = ~/.ssh/id_ed25519.pub
 [push]
 	default = simple
 	autoSetupRemote = true
