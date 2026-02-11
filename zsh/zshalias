@@ -32,7 +32,7 @@ keep-trying(){
   until $*
   do
     echo Attempt: $((++attempt))
-    countdown 10 "Retrying in"
+    countdown ${KEEP_TRYING_EVERY:-10} "Retrying in"
   done
   echo Succedded after $attempt attempts
 }
