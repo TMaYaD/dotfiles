@@ -1,53 +1,7 @@
-# Lines configured by zsh-newuser-install
-HISTFILE=~/.histfile
-HISTSIZE=1000
-SAVEHIST=1000
-setopt incappendhistory autocd beep extendedglob nomatch notify histignorespace histignoredups
-bindkey -v
-# End of lines configured by zsh-newuser-install
-# The following lines were added by compinstall
-zstyle :compinstall filename '/home/phoenix/.zshrc'
-
-if type brew &>/dev/null; then
-  FPATH=$(brew --prefix)/share/zsh/site-functions:$FPATH
+if [[ -n "$ANTIGRAVITY_AGENT" ]]; then
+  export AGENTIC_SHELL=1
 fi
 
-autoload -Uz compinit && compinit -u
-
-# End of lines added by compinstall
-setopt AUTO_PUSHD PUSHD_IGNORE_DUPS
-setopt ALWAYS_TO_END AUTO_LIST
-setopt CORRECT INTERACTIVE_COMMENTS
-
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
-
-# source antidote
-source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
-
-# initialize plugins statically with ${ZDOTDIR:-~}/.zsh_plugins.txt
-antidote load
-
-# bindkey '^\r' autosuggest-execute-suggestion
-
-# Load rbenv
-if type rbenv &>/dev/null; then
-  eval "$(rbenv init -)"
-fi
-
-# Load pyenv
-if type pyenv &>/dev/null; then
-  eval "$(pyenv init -)"
-fi
-
-# Load iterm2 shell integration
-test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
-export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
-
-for file in ~/.dotfiles/zsh/zshrc.d/*.sh; do
+for file in ~/.dotfiles/zsh/zshrc.d/*.zsh; do
     source "$file"
 done
-
-autoload -U zmv
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
