@@ -1,4 +1,5 @@
 brew "antidote"
+brew "direnv"
 brew "fzf"
 brew "gh"
 brew "git"

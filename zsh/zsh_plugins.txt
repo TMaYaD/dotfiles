@@ -1,7 +1,6 @@
 jeffreytse/zsh-vi-mode
 nojhan/liquidprompt
 zsh-users/zsh-syntax-highlighting
-Tarrasch/zsh-autoenv
 zsh-users/zsh-completions
 jocelynmallon/zshmarks
 tarruda/zsh-autosuggestions
