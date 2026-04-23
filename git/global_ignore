@@ -2,3 +2,4 @@
 .rake_tasks
 .vs
 .vscode
+.claude/*.local.*
