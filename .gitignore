@@ -1,3 +1,9 @@
 .netrwhist
 bundle/*
 .DS_Store
+**/*.local.zsh
+**/*.local.sh
+**/*.local.json
+**/*.local.yml
+**/*.local.yaml
+**/*.local.env

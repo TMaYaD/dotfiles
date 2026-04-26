@@ -26,3 +26,7 @@ export PIPENV_VENV_IN_PROJECT=1
 [ -f ${HOME}/.dotfiles/zsh/zshalias ] && source ${HOME}/.dotfiles/zsh/zshalias
 [ -f ${HOME}/.zshsecrets ] && source ${HOME}/.zshsecrets
 
+for file in ${HOME}/.dotfiles/zsh/zshenv.d/*.zsh(N); do
+    source "$file"
+done
+
