@@ -1,0 +1,398 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# Bundler-flavored skill manager for Claude Code.
+#   bin/skills install   sync to Skillfile.lock (default)
+#   bin/skills update    re-resolve refs to latest, rewrite lock
+#   bin/skills update <repo>   update one source
+
+require "fileutils"
+require "set"
+require "yaml"
+
+ROOT       = File.expand_path("..", __dir__)
+SKILLFILE  = File.join(ROOT, "Skillfile")
+LOCKFILE   = File.join(ROOT, "Skillfile.lock")
+CACHE_DIR  = File.join(ROOT, "cache")
+REPOS_DIR  = File.join(CACHE_DIR, "repos")
+OUTPUT_DIR = File.join(CACHE_DIR, "skills")
+
+class Entry
+  attr_reader :skills, :auto_discover
+  def initialize(auto_discover:)
+    @skills = []
+    @auto_discover = auto_discover
+  end
+  def add_skill(name)
+    @skills << name
+  end
+  def explicit_skills
+    @skills.sort
+  end
+end
+
+class GitEntry < Entry
+  attr_reader :repo, :ref, :root
+  def initialize(repo:, ref:, root: "skills", auto_discover:)
+    super(auto_discover: auto_discover)
+    @repo, @ref, @root = repo, ref, root
+  end
+  def kind; :git; end
+  def cache_dir; File.join(REPOS_DIR, @repo.tr("/", "_")); end
+  def url; "https://github.com/#{@repo}.git"; end
+  def skill_path(name); File.join(cache_dir, @root, name); end
+  def label; "#{@repo}#"; end
+  def discovered_skills
+    Dir.glob(File.join(cache_dir, @root, "*")).select { |d|
+      File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
+    }.map { |d| File.basename(d) }.sort
+  end
+end
+
+class DirectoryEntry < Entry
+  attr_reader :relative_path, :dir
+  def initialize(relative_path:, dir:, auto_discover:)
+    super(auto_discover: auto_discover)
+    @relative_path = relative_path
+    @dir = dir
+  end
+  def kind; :directory; end
+  def skill_path(name); File.join(@dir, name); end
+  def label; "#{@relative_path}/"; end
+  def discovered_skills
+    Dir.glob(File.join(@dir, "*")).select { |d|
+      File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
+    }.map { |d| File.basename(d) }.sort
+  end
+end
+
+class Skillfile
+  attr_reader :entries
+  def initialize
+    @entries = []
+    @current = nil
+  end
+  def source(repo = nil, ref: nil, root: "skills", path: nil, &block)
+    if path
+      raise "`source path: ...` does not take ref:" if ref
+      raise "`source path: ...` does not take a positional repo" if repo
+      abs = File.expand_path(path, File.dirname(SKILLFILE))
+      entry = DirectoryEntry.new(relative_path: path, dir: abs, auto_discover: !block_given?)
+    else
+      raise "`source` requires either a positional <repo> or path:" unless repo
+      entry = GitEntry.new(repo: repo, ref: ref || "origin/HEAD", root: root, auto_discover: !block_given?)
+    end
+    add_entry(entry, &block)
+  end
+  def skill(name)
+    raise "`skill #{name.inspect}` must be inside a `source` block" unless @current
+    @current.add_skill(name)
+  end
+  def self.load(path)
+    sf = new
+    sf.instance_eval(File.read(path), path)
+    sf
+  end
+  private
+  def add_entry(entry)
+    @current = entry
+    yield if block_given?
+    @current = nil
+    @entries << entry
+  end
+end
+
+class Lockfile
+  def initialize(data = nil)
+    @data = data || {"entries" => []}
+    @data["entries"] ||= []
+  end
+  def self.load(path)
+    return new unless File.exist?(path)
+    new(YAML.load_file(path) || {})
+  end
+  def entries
+    @data["entries"]
+  end
+  def find(entry)
+    @data["entries"].find do |e|
+      e["kind"] == entry.kind.to_s &&
+        (entry.kind == :git ? e["repo"] == entry.repo : e["path"] == entry.relative_path)
+    end
+  end
+  def upsert(entry, skills:, revision: nil)
+    @data["entries"].reject! do |e|
+      e["kind"] == entry.kind.to_s &&
+        (entry.kind == :git ? e["repo"] == entry.repo : e["path"] == entry.relative_path)
+    end
+    rec = {"kind" => entry.kind.to_s, "skills" => skills.sort}
+    if entry.kind == :git
+      rec["repo"] = entry.repo
+      rec["ref"] = entry.ref
+      rec["root"] = entry.root
+      rec["revision"] = revision
+    else
+      rec["path"] = entry.relative_path
+    end
+    @data["entries"] << rec
+    sort!
+  end
+  def prune(active_keys)
+    @data["entries"].select! do |e|
+      key = [e["kind"], e["repo"] || e["path"]]
+      active_keys.include?(key)
+    end
+  end
+  def write(path)
+    File.write(path, YAML.dump(@data))
+  end
+  private
+  def sort!
+    @data["entries"].sort_by! { |e| [e["kind"], e["repo"] || e["path"]] }
+  end
+end
+
+class Runner
+  def initialize(dry_run: false)
+    abort "no Skillfile at #{SKILLFILE}" unless File.exist?(SKILLFILE)
+    @sf = Skillfile.load(SKILLFILE)
+    @lock = Lockfile.load(LOCKFILE)
+    @dry_run = dry_run
+    @added = 0
+    @removed = 0
+    puts "Running in dry-run mode; no changes will be written." if @dry_run
+  end
+
+  def install
+    sync_all(update_filter: nil)
+  end
+
+  def update(*repos)
+    sync_all(update_filter: repos.empty? ? :all : Set.new(repos))
+  end
+
+  def clean
+    locked_skills = Set.new
+    @lock.entries.each { |e| locked_skills.merge(e["skills"] || []) }
+    locked_repos = Set.new
+    @lock.entries.each do |e|
+      locked_repos << e["repo"].tr("/", "_") if e["kind"] == "git"
+    end
+
+    removed = 0
+    if Dir.exist?(OUTPUT_DIR)
+      Dir.children(OUTPUT_DIR).sort.each do |name|
+        next if locked_skills.include?(name)
+        path = File.join(OUTPUT_DIR, name)
+        puts "  removing   skills/#{name}"
+        File.unlink(path) unless @dry_run
+        removed += 1
+      end
+    end
+    if Dir.exist?(REPOS_DIR)
+      Dir.children(REPOS_DIR).sort.each do |dir|
+        next if locked_repos.include?(dir)
+        path = File.join(REPOS_DIR, dir)
+        puts "  removing   repos/#{dir}"
+        FileUtils.rm_rf(path) unless @dry_run
+        removed += 1
+      end
+    end
+
+    suffix = @dry_run ? " (dry run)" : ""
+    if removed.zero?
+      puts "Nothing to clean#{suffix}."
+    else
+      puts "Cleaned #{removed} item(s)#{suffix}."
+    end
+  end
+
+  private
+
+  def sync_all(update_filter:)
+    FileUtils.mkdir_p(REPOS_DIR)
+
+    @sf.entries.each do |entry|
+      mode = pick_mode(entry, update_filter)
+      sync_entry(entry, mode: mode)
+    end
+
+    active_keys = Set.new(@sf.entries.map { |e| [e.kind.to_s, e.kind == :git ? e.repo : e.relative_path] })
+    @lock.entries.each do |e|
+      key = [e["kind"], e["repo"] || e["path"]]
+      next if active_keys.include?(key)
+      label = e["kind"] == "git" ? "#{e["repo"]}#" : "#{e["path"]}/"
+      log_diff(label, e["skills"] || [], [])
+    end
+    @lock.prune(active_keys)
+    @lock.write(LOCKFILE) unless @dry_run
+    build_output
+    print_summary
+  end
+
+  def pick_mode(entry, update_filter)
+    return :install if update_filter.nil?
+    return :update if update_filter == :all
+    entry.kind == :git && update_filter.include?(entry.repo) ? :update : :install
+  end
+
+  def sync_entry(entry, mode:)
+    locked = @lock.find(entry)
+    if entry.kind == :git
+      sync_git(entry, locked, mode)
+    else
+      sync_directory(entry, locked, mode)
+    end
+  end
+
+  def sync_git(entry, locked, mode)
+    old_skills = locked ? locked["skills"] : []
+    stale = locked && (locked["ref"] != entry.ref || locked["root"] != entry.root)
+
+    if mode == :install && locked && !stale
+      sha = locked["revision"]
+      ensure_clone(entry)
+      fetch(entry) unless commit_present?(entry, sha)
+      checkout(entry, sha)
+      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+      puts "Using #{entry.repo} @ #{sha[0,8]}"
+    else
+      puts "Fetching #{entry.repo} @ #{entry.ref}"
+      ensure_clone(entry)
+      fetch(entry)
+      sha = `git -C #{esc entry.cache_dir} rev-parse #{esc entry.ref}^{commit}`.strip
+      abort "couldn't resolve #{entry.ref} in #{entry.repo}" if sha.empty?
+      checkout(entry, sha)
+      old_sha = locked && locked["revision"]
+      if old_sha == sha
+        puts "  up-to-date @ #{sha[0,8]}"
+      elsif old_sha
+        puts "  #{old_sha[0,8]} → #{sha[0,8]}"
+      else
+        puts "  @ #{sha[0,8]}"
+      end
+      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+    end
+
+    validate_skills!(entry, new_skills, sha: sha)
+    log_diff(entry.label, old_skills, new_skills)
+    @lock.upsert(entry, skills: new_skills, revision: sha)
+  end
+
+  def sync_directory(entry, locked, mode)
+    old_skills = locked ? locked["skills"] : []
+
+    if mode == :install && locked
+      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+      puts "Using #{entry.relative_path}/"
+    else
+      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+      puts "Refreshing #{entry.relative_path}/"
+    end
+
+    validate_skills!(entry, new_skills)
+    log_diff(entry.label, old_skills, new_skills)
+    @lock.upsert(entry, skills: new_skills)
+  end
+
+  def validate_skills!(entry, names, sha: nil)
+    missing = names.reject do |name|
+      target = entry.skill_path(name)
+      File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
+    end
+    return if missing.empty?
+    where = sha ? " at #{sha[0,8]}" : ""
+    abort "missing SKILL.md for #{missing.map { |s| "'#{entry.label}#{s}'" }.join(', ')}#{where}"
+  end
+
+  def log_diff(label, old, new)
+    added = new - old
+    removed = old - new
+    added.each   { |s| puts "  installing '#{label}#{s}'" }
+    removed.each { |s| puts "  removing   '#{label}#{s}'" }
+    @added += added.size
+    @removed += removed.size
+  end
+
+  def ensure_clone(entry)
+    return if Dir.exist?(File.join(entry.cache_dir, ".git"))
+    run("git", "clone", "--quiet", entry.url, entry.cache_dir)
+  end
+
+  def fetch(entry)
+    run("git", "-C", entry.cache_dir, "fetch", "--quiet", "--tags", "origin")
+  end
+
+  def commit_present?(entry, sha)
+    system("git", "-C", entry.cache_dir, "cat-file", "-e", "#{sha}^{commit}",
+           out: File::NULL, err: File::NULL)
+  end
+
+  def checkout(entry, sha)
+    run("git", "-C", entry.cache_dir, "checkout", "--quiet", "--detach", sha)
+  end
+
+  def build_output
+    FileUtils.mkdir_p(OUTPUT_DIR) unless @dry_run
+    seen = {}
+
+    @sf.entries.each do |entry|
+      locked = @lock.find(entry)
+      names = locked ? locked["skills"] : []
+      names.each do |name|
+        target = entry.skill_path(name)
+        unless File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
+          warn "warning: #{entry.label}#{name} has no SKILL.md at #{target}"
+          next
+        end
+        collide!(seen, name, target)
+        link = File.join(OUTPUT_DIR, name)
+        if File.symlink?(link)
+          next if File.readlink(link) == target
+          File.unlink(link) unless @dry_run
+        elsif File.exist?(link)
+          warn "warning: #{link} exists but is not a symlink; leaving alone"
+          next
+        end
+        File.symlink(target, link) unless @dry_run
+      end
+    end
+  end
+
+  def collide!(seen, name, target)
+    if seen[name]
+      abort "skill name collision on '#{name}':\n  #{seen[name]}\n  #{target}"
+    end
+    seen[name] = target
+  end
+
+  def print_summary
+    total = @lock.entries.inject(0) { |sum, e| sum + e["skills"].size }
+    suffix = @dry_run ? " (dry run)" : ""
+    if @added.zero? && @removed.zero?
+      puts "#{total} skill(s) installed, no changes#{suffix}."
+    else
+      puts "#{total} skill(s) installed (#{@added} added, #{@removed} removed)#{suffix}."
+    end
+  end
+
+  def run(*cmd)
+    system(*cmd) or abort "command failed: #{cmd.join(' ')}"
+  end
+
+  def esc(s)
+    "'#{s.gsub("'", "'\\\\''")}'"
+  end
+end
+
+dry_run = ARGV.include?("--dry-run")
+argv = ARGV.reject { |a| a == "--dry-run" }
+cmd, *args = argv
+case cmd
+when nil, "install" then Runner.new(dry_run: dry_run).install
+when "update"       then Runner.new(dry_run: dry_run).update(*args)
+when "clean"        then Runner.new(dry_run: dry_run).clean
+else
+  warn "usage: skills [install|update [<repo> ...]|clean] [--dry-run]"
+  exit 1
+end

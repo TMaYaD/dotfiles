@@ -1,0 +1,13 @@
+# Skillfile — Claude Code skill manifest. See bin/skills.
+#   bin/skills install   sync to Skillfile.lock
+#   bin/skills update    re-resolve refs to latest, rewrite lock
+
+# Local source: every subdir of this path containing SKILL.md is included.
+# Path is relative to this Skillfile. Pass a block with explicit `skill` calls
+# to enumerate instead of auto-discovering.
+source path: "skills"
+
+# Git source: cherry-picked from an upstream repo, pinned via Skillfile.lock.
+# `ref:` may be a branch, tag, or SHA. `root:` (default "skills") is the subdir
+# within the upstream repo where skill folders live.
+source "ThibautBaissac/rails_ai_agents", root: ".claude/skills"

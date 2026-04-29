@@ -1,0 +1,29 @@
+---
+entries:
+- kind: directory
+  skills:
+  - coderabbit-review
+  path: skills
+- kind: git
+  skills:
+  - accessibility-review
+  - action-cable-patterns
+  - active-storage-setup
+  - api-versioning
+  - authentication-flow
+  - behavioral-guidelines
+  - caching-strategies
+  - code-review
+  - codex-review
+  - extraction-timing
+  - i18n-patterns
+  - performance-optimization
+  - postgres-patterns
+  - rails-architecture
+  - rails-concern
+  - security-audit
+  - solid-queue-setup
+  repo: ThibautBaissac/rails_ai_agents
+  ref: origin/HEAD
+  root: ".claude/skills"
+  revision: c0f4b189a238bdda877192397d3278dd90d15731

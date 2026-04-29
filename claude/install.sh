@@ -13,6 +13,17 @@ install_config $DOTFILES/claude/settings.json ~/.claude/settings.json
 install_config $DOTFILES/claude/CLAUDE.md ~/.claude/CLAUDE.md
 install_config $DOTFILES/claude/commands ~/.claude/commands
 
+# Sync skills via bin/skills (resolves Skillfile, pins SHAs in Skillfile.lock,
+# builds a flat symlink farm at cache/skills/) and point ~/.claude/skills at it.
+sync_claude_skills() {
+  [ -f "$DOTFILES/claude/Skillfile" ] || return 0
+  echo "\033[0;34mSyncing skills...\033[0m"
+  "$DOTFILES/claude/bin/skills" install
+  install_config "$DOTFILES/claude/cache/skills" "$HOME/.claude/skills"
+}
+
+sync_claude_skills
+
 # Generator: emit env exports for the gh-agent machine user. Sourced by zshenv
 # inside Claude Code subshells (gated on CLAUDECODE).
 claude_bot_env() {
