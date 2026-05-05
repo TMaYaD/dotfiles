@@ -36,3 +36,5 @@
 	insteadOf = https://github.com/
 [alias]
 	co = checkout
+[include]
+	path = ~/.gitconfig.local
