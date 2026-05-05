@@ -3,6 +3,7 @@ entries:
 - kind: directory
   skills:
   - coderabbit-review
+  - next-issues
   path: skills
 - kind: git
   skills:
