@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Save the visible portion of the current Claude Code session to a markdown file.
+
+Usage: save-transcript <output.md>
+
+Auto-detects the current session by finding the most recently modified
+.jsonl under ~/.claude/projects/<encoded-cwd>/. Captures user input and
+assistant text replies; skips thinking, tool calls, and tool results.
+"""
+import json
+import os
+import sys
+from pathlib import Path
+
+
+def extract(entry):
+    etype = entry.get("type")
+    if etype not in ("user", "assistant"):
+        return None
+    msg = entry.get("message", {}) or {}
+    content = msg.get("content")
+    if etype == "user":
+        if isinstance(content, str):
+            return ("user", content.strip())
+        if isinstance(content, list):
+            texts = [b.get("text", "") for b in content
+                     if isinstance(b, dict) and b.get("type") == "text"]
+            joined = "\n".join(t for t in texts if t.strip())
+            if joined.strip():
+                return ("user", joined.strip())
+        return None
+    if isinstance(content, list):
+        texts = [b.get("text", "") for b in content
+                 if isinstance(b, dict) and b.get("type") == "text"]
+        joined = "\n".join(t for t in texts if t.strip())
+        if joined.strip():
+            return ("assistant", joined.strip())
+    return None
+
+
+def last_user_string(jsonl):
+    """Return the last user-role message whose content is a plain string."""
+    last = None
+    try:
+        with open(jsonl) as f:
+            for raw in f:
+                try:
+                    e = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if e.get("type") != "user":
+                    continue
+                c = (e.get("message") or {}).get("content")
+                if isinstance(c, str):
+                    last = c
+    except OSError:
+        pass
+    return last
+
+
+def resolve_session(project_dir, args_str):
+    """Find the current session's jsonl. Tries, in order:
+    1. CLAUDE_SESSION_ID env var
+    2. fingerprint: jsonl whose last string-user message is this slash-command invocation
+    3. fallback: most recently modified jsonl (with warning)
+    """
+    sid = os.environ.get("CLAUDE_SESSION_ID")
+    if sid:
+        s = project_dir / f"{sid}.jsonl"
+        if s.exists():
+            return s
+        print(f"warning: CLAUDE_SESSION_ID={sid} but {s} not found", file=sys.stderr)
+
+    fingerprint = "<command-name>/save-transcript</command-name>"
+    args_marker = f"<command-args>{args_str}</command-args>"
+    matches = []
+    for jsonl in project_dir.glob("*.jsonl"):
+        last = last_user_string(jsonl)
+        if last and fingerprint in last and args_marker in last:
+            matches.append(jsonl)
+    if matches:
+        matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+        return matches[0]
+
+    sessions = sorted(project_dir.glob("*.jsonl"),
+                      key=lambda p: p.stat().st_mtime, reverse=True)
+    if not sessions:
+        print(f"no .jsonl sessions in {project_dir}", file=sys.stderr)
+        sys.exit(1)
+    print("warning: no CLAUDE_SESSION_ID and no fingerprint match; using most recent",
+          file=sys.stderr)
+    return sessions[0]
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("usage: save-transcript <output.md>", file=sys.stderr)
+        sys.exit(2)
+
+    out_path = Path(sys.argv[1])
+    if not out_path.is_absolute():
+        out_path = Path.cwd() / out_path
+
+    cwd = Path.cwd().resolve()
+    encoded = str(cwd).replace("/", "-").replace(".", "-")
+    project_dir = Path.home() / ".claude" / "projects" / encoded
+    if not project_dir.is_dir():
+        print(f"no session dir for cwd: {project_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    session = resolve_session(project_dir, sys.argv[1])
+
+    lines = [f"# Conversation transcript (visible turns only)\n",
+             f"Source: `{session}`\n"]
+    last_role = None
+    buf = []
+
+    def flush():
+        if buf:
+            lines.append(f"## {last_role}\n\n" + "\n\n".join(buf) + "\n\n---\n")
+
+    with open(session) as f:
+        for raw in f:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                entry = json.loads(raw)
+            except json.JSONDecodeError:
+                continue
+            result = extract(entry)
+            if not result:
+                continue
+            role, text = result
+            if role == last_role:
+                buf.append(text)
+            else:
+                flush()
+                last_role = role
+                buf = [text]
+    flush()
+
+    out_path.write_text("\n".join(lines))
+    print(f"Wrote {out_path} ({out_path.stat().st_size} bytes) from {session.name}")
+
+
+if __name__ == "__main__":
+    main()
