@@ -1,13 +1,12 @@
 {
-  "model": "claude-opus-4-7",
-  "enabledPlugins": {
-    "ruby-lsp@claude-plugins-official": true
-  },
-  "effortLevel": "high",
-  "skipDangerousModePermissionPrompt": true,
-  "editorMode": "vim",
   "attribution": {
     "commit": "",
     "pr": ""
-  }
+  },
+  "enabledPlugins": {
+    "ruby-lsp@claude-plugins-official": true
+  },
+  "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true,
+  "editorMode": "vim"
 }
