@@ -3,6 +3,7 @@ entries:
 - kind: directory
   skills:
   - coderabbit-review
+  - drive-android
   - next-issues
   path: skills
 - kind: git
