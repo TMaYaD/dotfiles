@@ -11,3 +11,4 @@ source path: "skills"
 # `ref:` may be a branch, tag, or SHA. `root:` (default "skills") is the subdir
 # within the upstream repo where skill folders live.
 source "ThibautBaissac/rails_ai_agents", root: ".claude/skills"
+source "mattpocock/skills", root: "skills/engineering"
