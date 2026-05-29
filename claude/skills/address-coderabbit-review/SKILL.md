@@ -1,5 +1,5 @@
 ---
-name: coderabbit-review
+name: address-coderabbit-review
 description: Process CodeRabbit review comments on a GitHub PR - verify each finding, then either fix and push, or reply with a justification when ignoring. Handles both inline review comments and conversation comments, and resolves review threads via the GitHub GraphQL API. Use when the user mentions CodeRabbit reviews, addressing CodeRabbit feedback, triaging bot comments, or resolving PR review threads.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---

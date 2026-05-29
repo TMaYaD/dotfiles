@@ -2,9 +2,10 @@
 entries:
 - kind: directory
   skills:
-  - coderabbit-review
+  - address-coderabbit-review
   - drive-android
   - next-issues
+  - pr-watch
   path: skills
 - kind: git
   skills:
