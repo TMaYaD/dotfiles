@@ -21,15 +21,17 @@
 	<key>AboutToPasteTabsWithCancel_selection</key>
 	<integer>2</integer>
 	<key>AiMaxTokens</key>
-	<integer>400000</integer>
+	<integer>1050000</integer>
 	<key>AiModel</key>
-	<string>gpt-5.2</string>
+	<string>gpt-5.5</string>
 	<key>AiResponseMaxTokens</key>
 	<integer>128000</integer>
 	<key>AitermURL</key>
 	<string>https://api.openai.com/v1/responses</string>
 	<key>AlternateMouseScroll</key>
 	<true/>
+	<key>AutoHideTmuxClientSession</key>
+	<false/>
 	<key>Default Bookmark Guid</key>
 	<string>7F8DF99B-4B18-4258-BE6F-592F819A2AAF</string>
 	<key>HTMLTabTitles</key>
@@ -52,6 +54,8 @@
 	<integer>524288</integer>
 	<key>HotkeyWindowFloatsAboveOtherWindows</key>
 	<false/>
+	<key>NeverBlockSystemShutdown</key>
+	<true/>
 	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF</key>
 	<true/>
 	<key>NeverWarnAboutShortLivedSessions_7F8DF99B-4B18-4258-BE6F-592F819A2AAF_selection</key>
@@ -493,14 +497,18 @@
 	</dict>
 	<key>PromptOnQuit</key>
 	<false/>
+	<key>QuitWhenAllWindowsClosed</key>
+	<true/>
 	<key>SeparateStatusBarsPerPane</key>
 	<false/>
 	<key>ShowFullScreenTabBar</key>
-	<false/>
+	<true/>
 	<key>ShowPaneTitles</key>
 	<true/>
 	<key>SoundForEsc</key>
 	<false/>
+	<key>SshIntegrationForURLs</key>
+	<true/>
 	<key>StatusBarPosition</key>
 	<integer>1</integer>
 	<key>StretchTabsToFillBar</key>
