@@ -4,10 +4,14 @@
     "pr": ""
   },
   "enabledPlugins": {
-    "ruby-lsp@claude-plugins-official": true
+    "ruby-lsp@claude-plugins-official": true,
+    "github@claude-plugins-official": true
   },
-  "effortLevel": "medium",
+  "effortLevel": "xhigh",
+  "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "editorMode": "vim",
-  "tui": "fullscreen"
+  "inputNeededNotifEnabled": true,
+  "agentPushNotifEnabled": true,
+  "model": "claude-opus-4-8"
 }
