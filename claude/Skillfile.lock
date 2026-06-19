@@ -1,13 +1,18 @@
 ---
 entries:
 - kind: directory
+  path: skills
   skills:
   - address-coderabbit-review
   - drive-android
+  - drive-epic
   - next-issues
   - pr-watch
-  path: skills
 - kind: git
+  repo: ThibautBaissac/rails_ai_agents
+  ref: origin/HEAD
+  root: ".claude/skills"
+  revision: c0f4b189a238bdda877192397d3278dd90d15731
   skills:
   - accessibility-review
   - action-cable-patterns
@@ -26,11 +31,11 @@ entries:
   - rails-concern
   - security-audit
   - solid-queue-setup
-  repo: ThibautBaissac/rails_ai_agents
-  ref: origin/HEAD
-  root: ".claude/skills"
-  revision: c0f4b189a238bdda877192397d3278dd90d15731
 - kind: git
+  repo: mattpocock/skills
+  ref: origin/HEAD
+  root: skills/engineering
+  revision: 733d312884b3878a9a9cff693c5886943753a741
   skills:
   - diagnose
   - grill-with-docs
@@ -42,7 +47,9 @@ entries:
   - to-prd
   - triage
   - zoom-out
+- kind: git
   repo: mattpocock/skills
   ref: origin/HEAD
-  root: skills/engineering
-  revision: 733d312884b3878a9a9cff693c5886943753a741
+  root: skills/productivity
+  pins:
+    handoff: 6eeb81b5fcfeeb5bd531dd47ab2f9f2bbea27461
