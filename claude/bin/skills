@@ -5,6 +5,13 @@
 #   bin/skills install   sync to Skillfile.lock (default)
 #   bin/skills update    re-resolve refs to latest, rewrite lock
 #   bin/skills update <repo>   update one source
+#   bin/skills clean     drop cache + symlinks no longer in the lock
+#
+# Each git source pins per "origin": an autodiscovered (repo, root) pins as a
+# unit under one `revision`; an explicit `skill` pins individually under `pins`.
+# `install` resolves only new origins and leaves locked ones untouched; `update`
+# re-resolves them. One worktree per (repo, revision) lets a single repo supply
+# skills at several commits at once.
 
 require "fileutils"
 require "set"
@@ -15,6 +22,7 @@ SKILLFILE  = File.join(ROOT, "Skillfile")
 LOCKFILE   = File.join(ROOT, "Skillfile.lock")
 CACHE_DIR  = File.join(ROOT, "cache")
 REPOS_DIR  = File.join(CACHE_DIR, "repos")
+TREES_DIR  = File.join(CACHE_DIR, "trees")
 OUTPUT_DIR = File.join(CACHE_DIR, "skills")
 
 class Entry
@@ -41,10 +49,11 @@ class GitEntry < Entry
   def lock_key; ["git", @repo, @root]; end
   def cache_dir; File.join(REPOS_DIR, @repo.tr("/", "_")); end
   def url; "https://github.com/#{@repo}.git"; end
-  def skill_path(name); File.join(cache_dir, @root, name); end
+  def worktree_dir(sha); File.join(TREES_DIR, "#{@repo.tr("/", "_")}_#{sha[0, 12]}"); end
+  def skill_path(name, sha); File.join(worktree_dir(sha), @root, name); end
   def label; "#{@repo}#"; end
-  def discovered_skills
-    Dir.glob(File.join(cache_dir, @root, "*")).select { |d|
+  def discovered_skills(sha)
+    Dir.glob(File.join(worktree_dir(sha), @root, "*")).select { |d|
       File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
     }.map { |d| File.basename(d) }.sort
   end
@@ -119,23 +128,29 @@ class Lockfile
   def self.record_key(e)
     e["kind"] == "git" ? ["git", e["repo"], e["root"]] : ["directory", e["path"]]
   end
+  # Skill names a record contributes, whichever pin granularity it uses: an
+  # autodiscovered root lists them under "skills" (one shared "revision"),
+  # an explicit source under "pins" (a revision per skill).
+  def self.record_skills(e)
+    e["skills"] || (e["pins"] ? e["pins"].keys : [])
+  end
   def entries
     @data["entries"]
   end
   def find(entry)
     @data["entries"].find { |e| Lockfile.record_key(e) == entry.lock_key }
   end
-  def upsert(entry, skills:, revision: nil)
+  def upsert(entry, fields)
     @data["entries"].reject! { |e| Lockfile.record_key(e) == entry.lock_key }
-    rec = {"kind" => entry.kind.to_s, "skills" => skills.sort}
+    rec = {"kind" => entry.kind.to_s}
     if entry.kind == :git
       rec["repo"] = entry.repo
       rec["ref"] = entry.ref
       rec["root"] = entry.root
-      rec["revision"] = revision
     else
       rec["path"] = entry.relative_path
     end
+    rec.merge!(fields)
     @data["entries"] << rec
     sort!
   end
@@ -172,29 +187,24 @@ class Runner
 
   def clean
     locked_skills = Set.new
-    @lock.entries.each { |e| locked_skills.merge(e["skills"] || []) }
     locked_repos = Set.new
+    locked_trees = Set.new
     @lock.entries.each do |e|
-      locked_repos << e["repo"].tr("/", "_") if e["kind"] == "git"
+      locked_skills.merge(Lockfile.record_skills(e))
+      next unless e["kind"] == "git"
+      slug = e["repo"].tr("/", "_")
+      locked_repos << slug
+      tree_shas(e).each { |sha| locked_trees << "#{slug}_#{sha[0, 12]}" }
     end
 
     removed = 0
-    if Dir.exist?(OUTPUT_DIR)
-      Dir.children(OUTPUT_DIR).sort.each do |name|
-        next if locked_skills.include?(name)
-        path = File.join(OUTPUT_DIR, name)
-        puts "  removing   skills/#{name}"
-        File.unlink(path) unless @dry_run
-        removed += 1
-      end
-    end
+    removed += prune_dir(OUTPUT_DIR, "skills") { |name| locked_skills.include?(name) }
+    removed += prune_dir(TREES_DIR, "trees") { |name| locked_trees.include?(name) }
+    removed += prune_dir(REPOS_DIR, "repos") { |name| locked_repos.include?(name) }
     if Dir.exist?(REPOS_DIR)
-      Dir.children(REPOS_DIR).sort.each do |dir|
-        next if locked_repos.include?(dir)
-        path = File.join(REPOS_DIR, dir)
-        puts "  removing   repos/#{dir}"
-        FileUtils.rm_rf(path) unless @dry_run
-        removed += 1
+      Dir.children(REPOS_DIR).each do |slug|
+        system("git", "-C", File.join(REPOS_DIR, slug), "worktree", "prune",
+               out: File::NULL, err: File::NULL)
       end
     end
 
@@ -204,6 +214,27 @@ class Runner
     else
       puts "Cleaned #{removed} item(s)#{suffix}."
     end
+  end
+
+  def tree_shas(e)
+    e["pins"] ? e["pins"].values : [e["revision"]].compact
+  end
+
+  def prune_dir(dir, label)
+    return 0 unless Dir.exist?(dir)
+    removed = 0
+    Dir.children(dir).sort.each do |name|
+      next if yield(name)
+      path = File.join(dir, name)
+      puts "  removing   #{label}/#{name}"
+      if File.symlink?(path) || File.file?(path)
+        File.unlink(path) unless @dry_run
+      else
+        FileUtils.rm_rf(path) unless @dry_run
+      end
+      removed += 1
+    end
+    removed
   end
 
   private
@@ -220,7 +251,7 @@ class Runner
     @lock.entries.each do |e|
       next if active_keys.include?(Lockfile.record_key(e))
       label = e["kind"] == "git" ? "#{e["repo"]}#" : "#{e["path"]}/"
-      log_diff(label, e["skills"] || [], [])
+      log_diff(label, Lockfile.record_skills(e), [])
     end
     @lock.prune(active_keys)
     @lock.write(LOCKFILE) unless @dry_run
@@ -244,65 +275,80 @@ class Runner
   end
 
   def sync_git(entry, locked, mode)
-    old_skills = locked ? locked["skills"] : []
+    ensure_clone(entry)
     # A root change yields a different lock_key, so `find` returns nil (a fresh
-    # source) rather than a stale match — only ref drift matters here.
-    stale = locked && locked["ref"] != entry.ref
-
-    if mode == :install && locked && !stale
-      sha = locked["revision"]
-      ensure_clone(entry)
-      fetch(entry) unless commit_present?(entry, sha)
-      checkout(entry, sha)
-      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
-      puts "Using #{entry.repo} @ #{sha[0,8]}"
+    # source) rather than a stale match — only ref drift forces a re-resolve.
+    ref_changed = locked && locked["ref"] != entry.ref
+    if entry.auto_discover
+      sync_git_root(entry, locked, mode, ref_changed)
     else
-      puts "Fetching #{entry.repo} @ #{entry.ref}"
-      ensure_clone(entry)
-      fetch(entry)
-      sha = `git -C #{esc entry.cache_dir} rev-parse #{esc entry.ref}^{commit}`.strip
-      abort "couldn't resolve #{entry.ref} in #{entry.repo}" if sha.empty?
-      checkout(entry, sha)
-      old_sha = locked && locked["revision"]
-      if old_sha == sha
-        puts "  up-to-date @ #{sha[0,8]}"
-      elsif old_sha
-        puts "  #{old_sha[0,8]} → #{sha[0,8]}"
-      else
-        puts "  @ #{sha[0,8]}"
-      end
-      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+      sync_git_skills(entry, locked, mode, ref_changed)
     end
+  end
 
-    validate_skills!(entry, new_skills, sha: sha)
+  # Autodiscovery: the whole (repo, root) is one origin pinned to a single
+  # revision; its skill set is whatever exists there at that revision.
+  def sync_git_root(entry, locked, mode, ref_changed)
+    old_skills = (locked && locked["skills"]) || []
+    if mode == :install && locked && locked["revision"] && !ref_changed
+      sha = locked["revision"]
+      ensure_commit(entry, sha)
+      puts "Using #{entry.repo} @ #{sha[0, 8]} (#{entry.root})"
+    else
+      sha = resolve_latest(entry)
+      report_resolve(locked && locked["revision"], sha)
+    end
+    ensure_worktree(entry, sha)
+    new_skills = entry.discovered_skills(sha)
+    validate_skills!(entry, new_skills.map { |n| [n, sha] })
     log_diff(entry.label, old_skills, new_skills)
-    @lock.upsert(entry, skills: new_skills, revision: sha)
+    @lock.upsert(entry, {"revision" => sha, "skills" => new_skills.sort})
+  end
+
+  # Explicit skills: each listed skill is its own origin with its own pinned
+  # revision, so `install` resolves only newly-added skills and leaves the ones
+  # already locked untouched — even when they share a repo at another revision.
+  def sync_git_skills(entry, locked, mode, ref_changed)
+    old_pins = (locked && locked["pins"]) || {}
+    latest = nil
+    pins = {}
+    entry.explicit_skills.each do |name|
+      if mode == :install && old_pins[name] && !ref_changed
+        pins[name] = old_pins[name]
+      else
+        latest ||= resolve_latest(entry)
+        pins[name] = latest
+      end
+    end
+    if latest
+      report_resolve(nil, latest)
+    else
+      puts "Using #{entry.repo} (#{entry.root})"
+    end
+    pins.values.uniq.each { |sha| ensure_commit(entry, sha); ensure_worktree(entry, sha) }
+    validate_skills!(entry, pins.to_a)
+    log_diff(entry.label, old_pins.keys, pins.keys)
+    @lock.upsert(entry, {"pins" => pins.sort.to_h})
   end
 
   def sync_directory(entry, locked, mode)
-    old_skills = locked ? locked["skills"] : []
-
-    if mode == :install && locked
-      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
-      puts "Using #{entry.relative_path}/"
-    else
-      new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
-      puts "Refreshing #{entry.relative_path}/"
-    end
-
-    validate_skills!(entry, new_skills)
+    old_skills = (locked && locked["skills"]) || []
+    new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+    puts "#{locked ? "Using" : "Refreshing"} #{entry.relative_path}/"
+    validate_skills!(entry, new_skills.map { |n| [n, nil] })
     log_diff(entry.label, old_skills, new_skills)
-    @lock.upsert(entry, skills: new_skills)
+    @lock.upsert(entry, {"skills" => new_skills.sort})
   end
 
-  def validate_skills!(entry, names, sha: nil)
-    missing = names.reject do |name|
-      target = entry.skill_path(name)
+  # name_shas is a list of [name, sha] (sha nil for local dirs).
+  def validate_skills!(entry, name_shas)
+    missing = name_shas.reject do |name, sha|
+      target = sha ? entry.skill_path(name, sha) : entry.skill_path(name)
       File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
     end
     return if missing.empty?
-    where = sha ? " at #{sha[0,8]}" : ""
-    abort "missing SKILL.md for #{missing.map { |s| "'#{entry.label}#{s}'" }.join(', ')}#{where}"
+    abort "missing SKILL.md for " +
+          missing.map { |n, s| "'#{entry.label}#{n}'#{s ? " at #{s[0, 8]}" : ""}" }.join(", ")
   end
 
   def log_diff(label, old, new)
@@ -328,8 +374,36 @@ class Runner
            out: File::NULL, err: File::NULL)
   end
 
-  def checkout(entry, sha)
-    run("git", "-C", entry.cache_dir, "checkout", "--quiet", "--detach", sha)
+  def ensure_commit(entry, sha)
+    fetch(entry) unless commit_present?(entry, sha)
+  end
+
+  def resolve_latest(entry)
+    puts "Fetching #{entry.repo} @ #{entry.ref}"
+    fetch(entry)
+    sha = `git -C #{esc entry.cache_dir} rev-parse #{esc entry.ref}^{commit}`.strip
+    abort "couldn't resolve #{entry.ref} in #{entry.repo}" if sha.empty?
+    sha
+  end
+
+  # One worktree per (repo, revision): symlinks resolve lazily against a stable
+  # checkout, so a repo can supply skills at several commits simultaneously.
+  def ensure_worktree(entry, sha)
+    dir = entry.worktree_dir(sha)
+    return if Dir.exist?(dir)
+    FileUtils.mkdir_p(TREES_DIR)
+    system("git", "-C", entry.cache_dir, "worktree", "prune", out: File::NULL, err: File::NULL)
+    run("git", "-C", entry.cache_dir, "worktree", "add", "--quiet", "--detach", dir, sha)
+  end
+
+  def report_resolve(old_sha, sha)
+    if old_sha == sha
+      puts "  up-to-date @ #{sha[0, 8]}"
+    elsif old_sha
+      puts "  #{old_sha[0, 8]} → #{sha[0, 8]}"
+    else
+      puts "  @ #{sha[0, 8]}"
+    end
   end
 
   def build_output
@@ -338,9 +412,8 @@ class Runner
 
     @sf.entries.each do |entry|
       locked = @lock.find(entry)
-      names = locked ? locked["skills"] : []
-      names.each do |name|
-        target = entry.skill_path(name)
+      next unless locked
+      skill_targets(entry, locked).each do |name, target|
         unless File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
           warn "warning: #{entry.label}#{name} has no SKILL.md at #{target}"
           next
@@ -359,6 +432,19 @@ class Runner
     end
   end
 
+  # [name, absolute target] for each skill a locked record installs, resolving
+  # the per-skill worktree path for git sources.
+  def skill_targets(entry, locked)
+    if entry.kind == :git && locked["pins"]
+      locked["pins"].map { |name, sha| [name, entry.skill_path(name, sha)] }
+    elsif entry.kind == :git
+      sha = locked["revision"]
+      (locked["skills"] || []).map { |name| [name, entry.skill_path(name, sha)] }
+    else
+      (locked["skills"] || []).map { |name| [name, entry.skill_path(name)] }
+    end
+  end
+
   def collide!(seen, name, target)
     if seen[name]
       abort "skill name collision on '#{name}':\n  #{seen[name]}\n  #{target}"
@@ -367,7 +453,7 @@ class Runner
   end
 
   def print_summary
-    total = @lock.entries.inject(0) { |sum, e| sum + e["skills"].size }
+    total = @lock.entries.inject(0) { |sum, e| sum + Lockfile.record_skills(e).size }
     suffix = @dry_run ? " (dry run)" : ""
     if @added.zero? && @removed.zero?
       puts "#{total} skill(s) installed, no changes#{suffix}."
