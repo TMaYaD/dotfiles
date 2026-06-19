@@ -38,6 +38,7 @@ class GitEntry < Entry
     @repo, @ref, @root = repo, ref, root
   end
   def kind; :git; end
+  def lock_key; ["git", @repo, @root]; end
   def cache_dir; File.join(REPOS_DIR, @repo.tr("/", "_")); end
   def url; "https://github.com/#{@repo}.git"; end
   def skill_path(name); File.join(cache_dir, @root, name); end
@@ -57,6 +58,7 @@ class DirectoryEntry < Entry
     @dir = dir
   end
   def kind; :directory; end
+  def lock_key; ["directory", @relative_path]; end
   def skill_path(name); File.join(@dir, name); end
   def label; "#{@relative_path}/"; end
   def discovered_skills
@@ -111,20 +113,20 @@ class Lockfile
     return new unless File.exist?(path)
     new(YAML.load_file(path) || {})
   end
+  # Identity of a stored record, mirroring Entry#lock_key. A git source is keyed
+  # on (repo, root) — not repo alone — so the same repo can be cherry-picked
+  # from multiple subdirs without the entries clobbering each other.
+  def self.record_key(e)
+    e["kind"] == "git" ? ["git", e["repo"], e["root"]] : ["directory", e["path"]]
+  end
   def entries
     @data["entries"]
   end
   def find(entry)
-    @data["entries"].find do |e|
-      e["kind"] == entry.kind.to_s &&
-        (entry.kind == :git ? e["repo"] == entry.repo : e["path"] == entry.relative_path)
-    end
+    @data["entries"].find { |e| Lockfile.record_key(e) == entry.lock_key }
   end
   def upsert(entry, skills:, revision: nil)
-    @data["entries"].reject! do |e|
-      e["kind"] == entry.kind.to_s &&
-        (entry.kind == :git ? e["repo"] == entry.repo : e["path"] == entry.relative_path)
-    end
+    @data["entries"].reject! { |e| Lockfile.record_key(e) == entry.lock_key }
     rec = {"kind" => entry.kind.to_s, "skills" => skills.sort}
     if entry.kind == :git
       rec["repo"] = entry.repo
@@ -138,17 +140,14 @@ class Lockfile
     sort!
   end
   def prune(active_keys)
-    @data["entries"].select! do |e|
-      key = [e["kind"], e["repo"] || e["path"]]
-      active_keys.include?(key)
-    end
+    @data["entries"].select! { |e| active_keys.include?(Lockfile.record_key(e)) }
   end
   def write(path)
     File.write(path, YAML.dump(@data))
   end
   private
   def sort!
-    @data["entries"].sort_by! { |e| [e["kind"], e["repo"] || e["path"]] }
+    @data["entries"].sort_by! { |e| Lockfile.record_key(e) }
   end
 end
 
@@ -217,10 +216,9 @@ class Runner
       sync_entry(entry, mode: mode)
     end
 
-    active_keys = Set.new(@sf.entries.map { |e| [e.kind.to_s, e.kind == :git ? e.repo : e.relative_path] })
+    active_keys = Set.new(@sf.entries.map(&:lock_key))
     @lock.entries.each do |e|
-      key = [e["kind"], e["repo"] || e["path"]]
-      next if active_keys.include?(key)
+      next if active_keys.include?(Lockfile.record_key(e))
       label = e["kind"] == "git" ? "#{e["repo"]}#" : "#{e["path"]}/"
       log_diff(label, e["skills"] || [], [])
     end
@@ -247,7 +245,9 @@ class Runner
 
   def sync_git(entry, locked, mode)
     old_skills = locked ? locked["skills"] : []
-    stale = locked && (locked["ref"] != entry.ref || locked["root"] != entry.root)
+    # A root change yields a different lock_key, so `find` returns nil (a fresh
+    # source) rather than a stale match — only ref drift matters here.
+    stale = locked && locked["ref"] != entry.ref
 
     if mode == :install && locked && !stale
       sha = locked["revision"]
