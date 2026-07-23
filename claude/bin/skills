@@ -1,17 +1,24 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 #
-# Bundler-flavored skill manager for Claude Code.
+# Bundler-flavored skill (and command) manager for Claude Code.
 #   bin/skills install   sync to Skillfile.lock (default)
 #   bin/skills update    re-resolve refs to latest, rewrite lock
 #   bin/skills update <repo>   update one source
 #   bin/skills clean     drop cache + symlinks no longer in the lock
 #
+# The manifest stays `Skillfile` and this script `skills`, but a source may
+# provide either skills or commands. A skill is a directory containing SKILL.md;
+# a command is a bare `<name>.md` prompt. Declare a command source with
+# `kind: :command`, and cherry-pick from it with the `command "<name>"` keyword
+# (mirroring `skill`). Skills link into cache/skills → ~/.claude/skills; commands
+# into cache/commands → ~/.claude/commands.
+#
 # Each git source pins per "origin": an autodiscovered (repo, root) pins as a
-# unit under one `revision`; an explicit `skill` pins individually under `pins`.
-# `install` resolves only new origins and leaves locked ones untouched; `update`
-# re-resolves them. One worktree per (repo, revision) lets a single repo supply
-# skills at several commits at once.
+# unit under one `revision`; an explicit `skill`/`command` pins individually
+# under `pins`. `install` resolves only new origins and leaves locked ones
+# untouched; `update` re-resolves them. One worktree per (repo, revision) lets a
+# single repo supply artifacts at several commits at once.
 
 require "fileutils"
 require "set"
@@ -23,12 +30,15 @@ LOCKFILE   = File.join(ROOT, "Skillfile.lock")
 CACHE_DIR  = File.join(ROOT, "cache")
 REPOS_DIR  = File.join(CACHE_DIR, "repos")
 TREES_DIR  = File.join(CACHE_DIR, "trees")
-OUTPUT_DIR = File.join(CACHE_DIR, "skills")
+# One symlink farm per artifact kind; install.sh points ~/.claude/{skills,commands} here.
+OUTPUT_DIRS = { skill: File.join(CACHE_DIR, "skills"),
+                command: File.join(CACHE_DIR, "commands") }.freeze
 
 class Entry
-  attr_reader :skills, :auto_discover
-  def initialize(auto_discover:)
+  attr_reader :skills, :auto_discover, :artifact
+  def initialize(artifact:, auto_discover:)
     @skills = []
+    @artifact = artifact
     @auto_discover = auto_discover
   end
   def add_skill(name)
@@ -37,12 +47,33 @@ class Entry
   def explicit_skills
     @skills.sort
   end
+  def command?; @artifact == :command; end
+  # A skill's on-disk unit is a directory; a command's is a bare <name>.md file.
+  def item_filename(name); command? ? "#{name}.md" : name; end
+  def valid_target?(target)
+    if command?
+      File.file?(target)
+    else
+      File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
+    end
+  end
+  # Names of the artifacts that live directly under `base`.
+  def discover_in(base)
+    if command?
+      Dir.glob(File.join(base, "*.md")).select { |f| File.file?(f) }
+         .map { |f| File.basename(f, ".md") }.sort
+    else
+      Dir.glob(File.join(base, "*")).select { |d|
+        File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
+      }.map { |d| File.basename(d) }.sort
+    end
+  end
 end
 
 class GitEntry < Entry
   attr_reader :repo, :ref, :root
-  def initialize(repo:, ref:, root: "skills", auto_discover:)
-    super(auto_discover: auto_discover)
+  def initialize(repo:, ref:, root: "skills", artifact:, auto_discover:)
+    super(artifact: artifact, auto_discover: auto_discover)
     @repo, @ref, @root = repo, ref, root
   end
   def kind; :git; end
@@ -50,30 +81,26 @@ class GitEntry < Entry
   def cache_dir; File.join(REPOS_DIR, @repo.tr("/", "_")); end
   def url; "https://github.com/#{@repo}.git"; end
   def worktree_dir(sha); File.join(TREES_DIR, "#{@repo.tr("/", "_")}_#{sha[0, 12]}"); end
-  def skill_path(name, sha); File.join(worktree_dir(sha), @root, name); end
+  def skill_path(name, sha); File.join(worktree_dir(sha), @root, item_filename(name)); end
   def label; "#{@repo}#"; end
   def discovered_skills(sha)
-    Dir.glob(File.join(worktree_dir(sha), @root, "*")).select { |d|
-      File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
-    }.map { |d| File.basename(d) }.sort
+    discover_in(File.join(worktree_dir(sha), @root))
   end
 end
 
 class DirectoryEntry < Entry
   attr_reader :relative_path, :dir
-  def initialize(relative_path:, dir:, auto_discover:)
-    super(auto_discover: auto_discover)
+  def initialize(relative_path:, dir:, artifact:, auto_discover:)
+    super(artifact: artifact, auto_discover: auto_discover)
     @relative_path = relative_path
     @dir = dir
   end
   def kind; :directory; end
   def lock_key; ["directory", @relative_path]; end
-  def skill_path(name); File.join(@dir, name); end
+  def skill_path(name); File.join(@dir, item_filename(name)); end
   def label; "#{@relative_path}/"; end
   def discovered_skills
-    Dir.glob(File.join(@dir, "*")).select { |d|
-      File.directory?(d) && File.exist?(File.join(d, "SKILL.md"))
-    }.map { |d| File.basename(d) }.sort
+    discover_in(@dir)
   end
 end
 
@@ -83,28 +110,36 @@ class Skillfile
     @entries = []
     @current = nil
   end
-  def source(repo = nil, ref: nil, root: "skills", path: nil, &block)
+  def source(repo = nil, ref: nil, root: "skills", path: nil, kind: :skill, &block)
+    raise "kind: must be :skill or :command" unless %i[skill command].include?(kind)
     if path
       raise "`source path: ...` does not take ref:" if ref
       raise "`source path: ...` does not take a positional repo" if repo
       abs = File.expand_path(path, File.dirname(SKILLFILE))
-      entry = DirectoryEntry.new(relative_path: path, dir: abs, auto_discover: !block_given?)
+      entry = DirectoryEntry.new(relative_path: path, dir: abs, artifact: kind, auto_discover: !block_given?)
     else
       raise "`source` requires either a positional <repo> or path:" unless repo
-      entry = GitEntry.new(repo: repo, ref: ref || "origin/HEAD", root: root, auto_discover: !block_given?)
+      entry = GitEntry.new(repo: repo, ref: ref || "origin/HEAD", root: root, artifact: kind, auto_discover: !block_given?)
     end
     add_entry(entry, &block)
   end
-  def skill(name)
-    raise "`skill #{name.inspect}` must be inside a `source` block" unless @current
-    @current.add_skill(name)
-  end
+  # `skill "x"` / `command "x"` cherry-pick from the enclosing source; the
+  # keyword must match the source's `kind:` (default :skill).
+  def skill(name); add_item(:skill, name); end
+  def command(name); add_item(:command, name); end
   def self.load(path)
     sf = new
     sf.instance_eval(File.read(path), path)
     sf
   end
   private
+  def add_item(kw, name)
+    raise "`#{kw} #{name.inspect}` must be inside a `source` block" unless @current
+    unless @current.artifact == kw
+      raise "`#{kw}` in a `kind: :#{@current.artifact}` source — declare `kind: :#{kw}` on the source"
+    end
+    @current.add_skill(name)
+  end
   def add_entry(entry)
     @current = entry
     yield if block_given?
@@ -128,11 +163,15 @@ class Lockfile
   def self.record_key(e)
     e["kind"] == "git" ? ["git", e["repo"], e["root"]] : ["directory", e["path"]]
   end
-  # Skill names a record contributes, whichever pin granularity it uses: an
-  # autodiscovered root lists them under "skills" (one shared "revision"),
-  # an explicit source under "pins" (a revision per skill).
-  def self.record_skills(e)
-    e["skills"] || (e["pins"] ? e["pins"].keys : [])
+  # Skill records omit the marker (default); command records carry "command".
+  def self.record_artifact(e)
+    e["artifact"] == "command" ? :command : :skill
+  end
+  # Item names a record contributes, whichever pin granularity it uses: an
+  # autodiscovered root lists them under "skills"/"commands" (one shared
+  # "revision"), an explicit source under "pins" (a revision per item).
+  def self.record_items(e)
+    e["skills"] || e["commands"] || (e["pins"] ? e["pins"].keys : [])
   end
   def entries
     @data["entries"]
@@ -186,11 +225,14 @@ class Runner
   end
 
   def clean
-    locked_skills = Set.new
+    locked = {skill: Set.new, command: Set.new}
     locked_repos = Set.new
     locked_trees = Set.new
     @lock.entries.each do |e|
-      locked_skills.merge(Lockfile.record_skills(e))
+      art = Lockfile.record_artifact(e)
+      Lockfile.record_items(e).each do |n|
+        locked[art] << (art == :command ? "#{n}.md" : n)
+      end
       next unless e["kind"] == "git"
       slug = e["repo"].tr("/", "_")
       locked_repos << slug
@@ -198,7 +240,8 @@ class Runner
     end
 
     removed = 0
-    removed += prune_dir(OUTPUT_DIR, "skills") { |name| locked_skills.include?(name) }
+    removed += prune_dir(OUTPUT_DIRS[:skill], "skills") { |name| locked[:skill].include?(name) }
+    removed += prune_dir(OUTPUT_DIRS[:command], "commands") { |name| locked[:command].include?(name) }
     removed += prune_dir(TREES_DIR, "trees") { |name| locked_trees.include?(name) }
     removed += prune_dir(REPOS_DIR, "repos") { |name| locked_repos.include?(name) }
     if Dir.exist?(REPOS_DIR)
@@ -251,7 +294,7 @@ class Runner
     @lock.entries.each do |e|
       next if active_keys.include?(Lockfile.record_key(e))
       label = e["kind"] == "git" ? "#{e["repo"]}#" : "#{e["path"]}/"
-      log_diff(label, Lockfile.record_skills(e), [])
+      log_diff(label, Lockfile.record_items(e), [])
     end
     @lock.prune(active_keys)
     @lock.write(LOCKFILE) unless @dry_run
@@ -287,9 +330,9 @@ class Runner
   end
 
   # Autodiscovery: the whole (repo, root) is one origin pinned to a single
-  # revision; its skill set is whatever exists there at that revision.
+  # revision; its item set is whatever exists there at that revision.
   def sync_git_root(entry, locked, mode, ref_changed)
-    old_skills = (locked && locked["skills"]) || []
+    old_names = locked ? Lockfile.record_items(locked) : []
     if mode == :install && locked && locked["revision"] && !ref_changed
       sha = locked["revision"]
       ensure_commit(entry, sha)
@@ -299,15 +342,15 @@ class Runner
       report_resolve(locked && locked["revision"], sha)
     end
     ensure_worktree(entry, sha)
-    new_skills = entry.discovered_skills(sha)
-    validate_skills!(entry, new_skills.map { |n| [n, sha] })
-    log_diff(entry.label, old_skills, new_skills)
-    @lock.upsert(entry, {"revision" => sha, "skills" => new_skills.sort})
+    new_names = entry.discovered_skills(sha)
+    validate_skills!(entry, new_names.map { |n| [n, sha] })
+    log_diff(entry.label, old_names, new_names)
+    @lock.upsert(entry, {"revision" => sha, names_key(entry) => new_names.sort}.merge(artifact_fields(entry)))
   end
 
-  # Explicit skills: each listed skill is its own origin with its own pinned
-  # revision, so `install` resolves only newly-added skills and leaves the ones
-  # already locked untouched — even when they share a repo at another revision.
+  # Explicit items: each listed skill/command is its own origin with its own
+  # pinned revision, so `install` resolves only newly-added ones and leaves the
+  # locked ones untouched — even when they share a repo at another revision.
   def sync_git_skills(entry, locked, mode, ref_changed)
     old_pins = (locked && locked["pins"]) || {}
     latest = nil
@@ -328,26 +371,32 @@ class Runner
     pins.values.uniq.each { |sha| ensure_commit(entry, sha); ensure_worktree(entry, sha) }
     validate_skills!(entry, pins.to_a)
     log_diff(entry.label, old_pins.keys, pins.keys)
-    @lock.upsert(entry, {"pins" => pins.sort.to_h})
+    @lock.upsert(entry, {"pins" => pins.sort.to_h}.merge(artifact_fields(entry)))
   end
 
   def sync_directory(entry, locked, mode)
-    old_skills = (locked && locked["skills"]) || []
-    new_skills = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
+    old_names = locked ? Lockfile.record_items(locked) : []
+    new_names = entry.auto_discover ? entry.discovered_skills : entry.explicit_skills
     puts "#{locked ? "Using" : "Refreshing"} #{entry.relative_path}/"
-    validate_skills!(entry, new_skills.map { |n| [n, nil] })
-    log_diff(entry.label, old_skills, new_skills)
-    @lock.upsert(entry, {"skills" => new_skills.sort})
+    validate_skills!(entry, new_names.map { |n| [n, nil] })
+    log_diff(entry.label, old_names, new_names)
+    @lock.upsert(entry, {names_key(entry) => new_names.sort}.merge(artifact_fields(entry)))
   end
+
+  # Lockfile field helpers: skill records keep the legacy "skills" key and no
+  # marker; command records use "commands" plus an "artifact" tag.
+  def names_key(entry); entry.command? ? "commands" : "skills"; end
+  def artifact_fields(entry); entry.command? ? {"artifact" => "command"} : {}; end
 
   # name_shas is a list of [name, sha] (sha nil for local dirs).
   def validate_skills!(entry, name_shas)
     missing = name_shas.reject do |name, sha|
       target = sha ? entry.skill_path(name, sha) : entry.skill_path(name)
-      File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
+      entry.valid_target?(target)
     end
     return if missing.empty?
-    abort "missing SKILL.md for " +
+    noun = entry.command? ? "command file" : "SKILL.md"
+    abort "missing #{noun} for " +
           missing.map { |n, s| "'#{entry.label}#{n}'#{s ? " at #{s[0, 8]}" : ""}" }.join(", ")
   end
 
@@ -387,7 +436,7 @@ class Runner
   end
 
   # One worktree per (repo, revision): symlinks resolve lazily against a stable
-  # checkout, so a repo can supply skills at several commits simultaneously.
+  # checkout, so a repo can supply artifacts at several commits simultaneously.
   def ensure_worktree(entry, sha)
     dir = entry.worktree_dir(sha)
     return if Dir.exist?(dir)
@@ -407,19 +456,20 @@ class Runner
   end
 
   def build_output
-    FileUtils.mkdir_p(OUTPUT_DIR) unless @dry_run
+    OUTPUT_DIRS.each_value { |d| FileUtils.mkdir_p(d) } unless @dry_run
     seen = {}
 
     @sf.entries.each do |entry|
       locked = @lock.find(entry)
       next unless locked
+      out_dir = OUTPUT_DIRS[entry.artifact]
       skill_targets(entry, locked).each do |name, target|
-        unless File.directory?(target) && File.exist?(File.join(target, "SKILL.md"))
-          warn "warning: #{entry.label}#{name} has no SKILL.md at #{target}"
+        unless entry.valid_target?(target)
+          warn "warning: #{entry.label}#{name} has no target at #{target}"
           next
         end
-        collide!(seen, name, target)
-        link = File.join(OUTPUT_DIR, name)
+        link = File.join(out_dir, entry.item_filename(name))
+        collide!(seen, link, "#{entry.label}#{name}", target)
         if File.symlink?(link)
           next if File.readlink(link) == target
           File.unlink(link) unless @dry_run
@@ -432,33 +482,35 @@ class Runner
     end
   end
 
-  # [name, absolute target] for each skill a locked record installs, resolving
-  # the per-skill worktree path for git sources.
+  # [name, absolute target] for each artifact a locked record installs, resolving
+  # the per-item worktree path for git sources.
   def skill_targets(entry, locked)
     if entry.kind == :git && locked["pins"]
       locked["pins"].map { |name, sha| [name, entry.skill_path(name, sha)] }
     elsif entry.kind == :git
       sha = locked["revision"]
-      (locked["skills"] || []).map { |name| [name, entry.skill_path(name, sha)] }
+      Lockfile.record_items(locked).map { |name| [name, entry.skill_path(name, sha)] }
     else
-      (locked["skills"] || []).map { |name| [name, entry.skill_path(name)] }
+      Lockfile.record_items(locked).map { |name| [name, entry.skill_path(name)] }
     end
   end
 
-  def collide!(seen, name, target)
-    if seen[name]
-      abort "skill name collision on '#{name}':\n  #{seen[name]}\n  #{target}"
+  # Keyed on the output link so a skill and a command may share a bare name
+  # (they land in different farms); two sources filling the same link collide.
+  def collide!(seen, link, who, target)
+    if seen[link]
+      abort "name collision on '#{File.basename(link)}':\n  #{seen[link]}\n  #{target}"
     end
-    seen[name] = target
+    seen[link] = target
   end
 
   def print_summary
-    total = @lock.entries.inject(0) { |sum, e| sum + Lockfile.record_skills(e).size }
+    total = @lock.entries.inject(0) { |sum, e| sum + Lockfile.record_items(e).size }
     suffix = @dry_run ? " (dry run)" : ""
     if @added.zero? && @removed.zero?
-      puts "#{total} skill(s) installed, no changes#{suffix}."
+      puts "#{total} item(s) installed, no changes#{suffix}."
     else
-      puts "#{total} skill(s) installed (#{@added} added, #{@removed} removed)#{suffix}."
+      puts "#{total} item(s) installed (#{@added} added, #{@removed} removed)#{suffix}."
     end
   end
 

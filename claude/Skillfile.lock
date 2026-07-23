@@ -1,6 +1,22 @@
 ---
 entries:
 - kind: directory
+  path: commands
+  commands:
+  - address-reviews
+  - cleanup-stuck
+  - commit-message
+  - fix-ci
+  - fix-hook
+  - fix-review
+  - implement-issue
+  - plan-issue
+  - pr-body
+  - resolve-conflicts
+  - save-transcript
+  - wrap
+  artifact: command
+- kind: directory
   path: skills
   skills:
   - address-coderabbit-review
