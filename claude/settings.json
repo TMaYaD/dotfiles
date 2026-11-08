@@ -3,6 +3,7 @@
     "commit": "",
     "pr": ""
   },
+  "model": "opus[1m]",
   "enabledPlugins": {
     "ruby-lsp@claude-plugins-official": true,
     "github@claude-plugins-official": true
@@ -12,6 +13,5 @@
   "skipDangerousModePermissionPrompt": true,
   "editorMode": "vim",
   "inputNeededNotifEnabled": true,
-  "agentPushNotifEnabled": true,
-  "model": "claude-opus-4-8"
+  "agentPushNotifEnabled": true
 }

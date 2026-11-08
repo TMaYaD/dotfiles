@@ -7,6 +7,17 @@
 # to enumerate instead of auto-discovering.
 source path: "skills"
 
+# Commands are managed with the same semantics as skills (kind: :command). A
+# command is a bare `<name>.md` prompt; this local source auto-discovers every
+# `.md` here and links it into ~/.claude/commands.
+source path: "commands", kind: :command
+
+# Cherry-pick commands from a git repo — `command` mirrors `skill`:
+# source "acme/tooling", root: "commands", kind: :command do
+#   command "plan-issue"
+#   command "implement-issue"
+# end
+
 # Git source: cherry-picked from an upstream repo, pinned via Skillfile.lock.
 # `ref:` may be a branch, tag, or SHA. `root:` (default "skills") is the subdir
 # within the upstream repo where skill folders live.
@@ -15,4 +26,8 @@ source "mattpocock/skills", root: "skills/engineering"
 
 source "mattpocock/skills", root: "skills/productivity" do
   skill "handoff"
+end
+
+source "skills-directory/skill-codex", root: "plugins/skill-codex/skills" do
+  skill "codex"
 end
