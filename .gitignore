@@ -7,3 +7,7 @@ bundle/*
 **/*.local.yml
 **/*.local.yaml
 **/*.local.env
+
+# Private, machine/person-specific Claude content (this repo is public)
+claude/capo-mem-dump/
+claude/skills/lease-manager/
