@@ -17,3 +17,11 @@ When brainstorming, designing, or reviewing decisions, push back where the subst
 - To add, rename, remove, or edit a local skill: change it under `~/.dotfiles/claude/skills/` (the source of truth) and then run `~/.dotfiles/claude/bin/skills install` to refresh the symlinks and lockfile.
 - To add/remove an upstream skill source: edit `~/.dotfiles/claude/Skillfile`, then `bin/skills install` (or `bin/skills update` to bump pinned refs).
 - For renames, also update the `name:` field in the skill's `SKILL.md` frontmatter to match the new directory name.
+
+## Browser
+
+The user's browser is Helium (`/Applications/Helium.app`), not Brave. Brave is still installed but no longer in use.
+
+**How to apply:**
+- When a task needs a local Chromium binary (headless screenshots, CLI automation, opening a page for the user), use `/Applications/Helium.app/Contents/MacOS/Helium`, with a throwaway `--user-data-dir` so the user's profile is never touched.
+- Don't suggest Brave-specific settings, extensions or paths.
