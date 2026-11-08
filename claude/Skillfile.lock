@@ -4,6 +4,7 @@ entries:
   path: skills
   skills:
   - address-coderabbit-review
+  - coderabbit-slots
   - drive-android
   - drive-epic
   - next-issues
