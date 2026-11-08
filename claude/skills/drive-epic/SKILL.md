@@ -104,7 +104,12 @@ This loop is strategy-agnostic; the only difference is that in **local** mode yo
 you'd *wait on / relay to the bot*:
 
 1. **Check the board** — issue labels (`ready-for-planning` / `ready-for-development`
-   / `in-progress` / `in-error`), open epic PRs, and their gate state.
+   / `in-progress` / `in-error`), open epic PRs, and their gate state. **The delta
+   check must be content-based:** re-read the `<!-- loony-plan -->` comment body and
+   the CodeRabbit walkthrough body *every* cycle. Both are single comments **edited in
+   place** — never infer state from a comment's existence, position, or `created_at`
+   (a revision moves only `updated_at`). See
+   [`in-place-comment-updates.md`](in-place-comment-updates.md).
 2. **Graduate plans** you're satisfied with (`ready-for-planning` → review →
    `ready-for-development`). See "Plan review."
 3. **Gate + merge** any PR that's genuinely green. See "Merge gate."
@@ -140,6 +145,12 @@ grounds in current code; you keep context), then make the call:
 - Settle cross-issue **contracts/seams** before dependents build on them (e.g. a
   connection-file schema, a shared key). Send back a plan that leaves a downstream
   contract undefined.
+- **Steer with comments. Never rewrite the issue body.** The bot **reads the issue's
+  comments**, not just its body — a comment is sufficient to redirect planning. So when
+  triage contradicts the issue's premise, when you finalise provisional acceptance
+  criteria, or when a decision supersedes the issue's approach, all of it goes in a
+  comment. Leave the wrong reading standing and correct it alongside. See the gotcha
+  below for why this is not merely a style preference.
 - **Local mode:** the plan-review subagent must be a *different* subagent from the one
   that wrote the plan — never let the planner grade its own homework. Your alignment
   judgment is still the gate.
@@ -154,10 +165,13 @@ bar as one the bot raised:
       workflow existed, or before a base merge, may have *no* run — trigger one with
       `gh pr update-branch <n>`, which also surfaces conflicts.)
 - [ ] **A *real* CodeRabbit review, not a rate-limit auto-pass.** The `CodeRabbit`
-      status check goes `SUCCESS` even when rate-limited. **Always read the latest
-      coderabbit comment** — if it says "rate limited / Review limit reached", it did
-      NOT review. Confirm 0 unresolved actionable threads and a genuine "Actionable
-      comments posted: N" / "No actionable comments" verdict.
+      status check goes `SUCCESS` even when rate-limited. **Always re-read the
+      CodeRabbit walkthrough — the *first* CodeRabbit issue-comment on the PR, which is
+      edited in place on each pass** (not the *latest* comment, which may be a newer,
+      unrelated one). If it says "rate limited / Review limit reached", it did NOT
+      review. Confirm 0 unresolved actionable threads and a genuine "Actionable
+      comments posted: N" / "No actionable comments" verdict, and that the SHA range it
+      names reaches the current head. See the `coderabbit-slots` skill for the queries.
 - [ ] **Findings addressed.** Remote: **relay them to the bot** (an authorized
       comment) — addressing/rebutting CR is the bot's job, not yours. Local: spawn an
       `address-reviews` subagent to triage/fix/rebut and push. Either way the *worker*
@@ -213,6 +227,11 @@ Per issue, in order:
    The subagent outputs plan markdown; post it as the issue's `<!-- loony-plan -->`
    comment for an auditable record. **Then run your normal plan-review gate with a
    *different* subagent** and graduate.
+   **This hand-assembled context is a local-mode detail — do not read it as the remote
+   bot's input contract.** You prep `body` explicitly here only because nothing else
+   will; the remote bot reads the issue's comments on its own. Never conclude from this
+   line that steering the bot requires editing the body — it does not (see the gotcha
+   below). In local mode, fold the relevant comment content into `feedback`.
 2. **Develop — `implement-issue` (+ `fix-hook`).** After graduation, an implementer
    subagent (isolation: worktree) with context `{issue_number, title, body, plan}`
    writes the code, runs `.githooks/pre-commit`, and loops `fix-hook` on any hook
@@ -272,8 +291,9 @@ commands themselves; point the subagent at `~/.claude/commands/<cmd>.md` per the
 above — don't re-derive them.)
 
 **Plan review** — "Confirm the tree is current (`git rev-parse HEAD == origin/main`,
-else `git pull --ff-only`). Fetch the latest `<!-- loony-plan -->` comment on issue #N
-and the issue body. Ground in current code (cite file:line). Assess architecture fit,
+else `git pull --ff-only`). Re-read the `<!-- loony-plan -->` comment on issue #N (there
+is only one — it's edited in place; read the *body*, don't grep it) and the issue body.
+Ground in current code (cite file:line). Assess architecture fit,
 accuracy of code claims, AC coverage, risks; for revisions, whether my prior required
 changes were addressed. Verdict: LOOKS-READY or HAS-CONCERNS (list specific blockers)."
 
@@ -287,15 +307,39 @@ Verdict: MERGE-READY / WAIT (CR) / NOT-READY."
 
 ## Gotchas (hard-won — these cost hours)
 
+- **Never rewrite an issue body (universal).** The body is the **operator's alignment
+  baseline** — what they read back later to judge whether what shipped answers what they
+  asked. Rewriting it destroys that, and it is *not recoverable*: GitHub's
+  `userContentEdits` GraphQL `diff` returns the **current** body, not the prior one, so
+  once you have overwritten it the original exists only in your context. Put triage,
+  premise corrections, finalised acceptance criteria and supersession notices in
+  **comments**, and structure them to be checkable against the body — name each premise
+  you are correcting rather than quietly replacing it, and mark superseded ACs as
+  replaced rather than restating them as if they had always been there. (Bit me: I
+  rewrote an issue's body with root-cause findings because I had assumed the bot plans
+  from the body alone — it does not, it reads comments — and had to restore the original
+  from earlier context. Two mistakes, one edit.) Applies to PR descriptions authored by
+  others, for the same reason. If a plan ever *demonstrably* ignores a comment, that is a
+  bug to file at `<owner>/loony-dev` — never a licence to edit the body.
 - **Stale local checkout (universal).** `gh pr merge` updates the *remote*, not your
   local tree. `git pull --ff-only origin main` after merges, or subagents that inspect
   the bare working tree read old code and produce wrong verdicts. (Bit me: a "retire X"
   plan review falsely claimed merged files didn't exist.) PR-branch verifiers that `git
   fetch <branch>` + detached worktree are fine; only direct-tree inspection is the trap.
+- **The key comments are edited in place (universal).** The `<!-- loony-plan -->`
+  comment and CodeRabbit's walkthrough (the *first* CR issue-comment) are each ONE
+  comment rewritten on every update — `created_at` never moves, only `updated_at`. A
+  revision happened iff `updated_at != created_at`; then **re-read the body**. (Bit me:
+  keying on `createdAt` I reported two issues as "not revised yet" when both had
+  revised.) And grepping a body ≠ reading it — 4 hits for a forbidden clause were the
+  plan *explaining why it's wrong*. See
+  [`in-place-comment-updates.md`](in-place-comment-updates.md).
 - **CodeRabbit rate-limits constantly (universal).** The green check ≠ a review. Read
-  the comment; wait for the reset (it states "available in X min" from its `created_at`);
-  re-trigger with `@coderabbitai review`. Keep the gate strict in both strategies — don't
-  merge on the auto-pass.
+  the rate-limit comment; compute the reset from its **`updated_at`** plus the wait it
+  states — that comment is edited in place too, so `created_at` is wrong. The stated
+  wait moves constantly (observed 1–52 min), so **re-read it every time**; a value you
+  cached five minutes ago is worthless. After the reset, re-trigger with `@coderabbitai
+  review`. Keep the gate strict in both strategies — don't merge on the auto-pass.
 - **Parallel local workers collide on worktrees (local).** Two implementer subagents on
   sibling issues editing the same files conflict. Give each `isolation: worktree` and a
   distinct branch; see [`worktree-add-conflict-blocker.md`](worktree-add-conflict-blocker.md)
@@ -306,10 +350,22 @@ Verdict: MERGE-READY / WAIT (CR) / NOT-READY."
   exited with code 1` (no detail in the GitHub comment, only the bot's logs). Fix:
   operator re-logins. When you see that error, suspect a logout — and it's a prime cue to
   **fall back to local** while the operator is away.
-- **Relaying triggers the bot (remote).** Any authorized comment on a PR spawns a bot
-  task; while a worktree/env bug is active that can cause thrashing — label `in-error` to
-  stop it. (No analog in local mode — your subagents push directly, nothing is triggered
-  by comments.)
+- **Relaying triggers the bot (remote).** Any authorized comment on an **issue or a PR**
+  spawns a bot task; while a worktree/env bug is active that can cause thrashing — label
+  `in-error` to stop it. (No analog in local mode — your subagents push directly, nothing
+  is triggered by comments.)
+- **"Hold" written in prose does not hold anything (remote).** The dispatch fires on the
+  comment event; the bot never reads your comment and decides not to work. So **to pause
+  an issue, remove `ready-for-planning` FIRST, then comment** — in that order. Comment
+  first and you have just re-dispatched the very issue you were parking. (Bit me: I
+  posted "hold, do not re-plan yet — wait for #723" on two issues and both re-planned
+  within 30 seconds.) Resuming is the same mechanism in reverse: re-add the label, which
+  is itself the trigger, so the comment explaining the resume can come before it.
+- **A revision comment and a hold comment are the same event to the bot (remote).** If a
+  comment contains actionable required changes you *do* want acted on, leave the label
+  on. If it contains anything else — a supersession notice, a re-sequencing, a correction
+  to your own earlier feedback — de-label first. Decide which kind of comment you are
+  writing before you post it, not after.
 - **Triage findings by where they live (universal).** CodeRabbit "outside-diff" findings
   sit in the review *body*, not as inline threads, so "0 unresolved threads" ≠ clean —
   read the body too.
@@ -318,4 +374,5 @@ See the field notes bundled next to this skill for the same lessons in durable f
 [`feedback-drive-workflow-role.md`](feedback-drive-workflow-role.md),
 [`coderabbit-ratelimit-workflow.md`](coderabbit-ratelimit-workflow.md),
 [`worktree-add-conflict-blocker.md`](worktree-add-conflict-blocker.md),
-[`keep-local-checkout-synced.md`](keep-local-checkout-synced.md).
+[`keep-local-checkout-synced.md`](keep-local-checkout-synced.md),
+[`in-place-comment-updates.md`](in-place-comment-updates.md).

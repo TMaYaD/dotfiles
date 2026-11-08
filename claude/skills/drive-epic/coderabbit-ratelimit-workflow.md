@@ -10,10 +10,13 @@ rate-limit auto-pass, **not** a real review), the PR is **not** reviewed yet —
 not merge it.
 
 **Handling (do NOT loosen the gate):** keep gating strictly on a real CodeRabbit
-review. To time the re-trigger: read the rate-limit comment's `created_at` plus its
-"More reviews will be available in X minutes" value → that's the reset time. After
-the reset, post `@coderabbitai review` as a PR comment to kick the review (any
-authorized non-bot collaborator can do this). Pushing new commits also re-triggers.
+review. To time the re-trigger: read the rate-limit comment's **`updated_at`** plus its
+"More reviews will be available in X minutes" value → that's the reset time. (That
+comment is edited **in place**, so `created_at` is wrong — see
+`in-place-comment-updates.md`. The stated wait moves constantly, observed 1–52 min:
+re-read it every time rather than caching it.) After the reset, post
+`@coderabbitai review` as a PR comment to kick the review (any authorized non-bot
+collaborator can do this). Pushing new commits also re-triggers.
 
 **The "already reviewed" stalemate + the fix (learned the hard way):** when
 CodeRabbit is rate-limited *at a push*, its incremental tracker marks that commit
