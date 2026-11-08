@@ -16,3 +16,7 @@ source "mattpocock/skills", root: "skills/engineering"
 source "mattpocock/skills", root: "skills/productivity" do
   skill "handoff"
 end
+
+source "skills-directory/skill-codex", root: "plugins/skill-codex/skills" do
+  skill "codex"
+end
