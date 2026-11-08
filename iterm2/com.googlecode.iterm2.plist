@@ -29,11 +29,42 @@
 	<key>AitermURL</key>
 	<string>https://api.openai.com/v1/responses</string>
 	<key>AlternateMouseScroll</key>
-	<true/>
+	<false/>
 	<key>AutoHideTmuxClientSession</key>
 	<false/>
+	<key>ClaudeCodeTriggersInstalled</key>
+	<true/>
+	<key>CodeReviewSavedPrompts</key>
+	<data>
+	W3sibmFtZSI6IkRlZmF1bHQiLCJ0ZXh0IjoiUmV2aWV3IHRoZSBwZW5kaW5nIGNoYW5n
+	ZXMgaW4gdGhpcyByZXBvLiBGbGFnIGlzc3VlcyBhIGNhcmVmdWwgbWFpbnRhaW5lciB3
+	b3VsZCBibG9jayBvbiBiZWZvcmUgbWVyZ2UsIGluIHJvdWdobHkgdGhpcyBvcmRlcjpc
+	biAgMS4gQ29ycmVjdG5lc3Mg4oCUIGxvZ2ljIGVycm9ycywgYnJva2VuIGludmFyaWFu
+	dHMsIG1pc3NlZCBlZGdlIGNhc2VzLCBvZmYtYnktb25lLCByYWNlcywgbGlmZXRpbWVc
+	L21lbW9yeSBidWdzLCBlcnJvciBwYXRocyB0aGF0IHN3YWxsb3cgZmFpbHVyZXMuXG4g
+	IDIuIFNlY3VyaXR5IOKAlCBpbmplY3Rpb24sIGF1dGhuXC9hdXRoeiBtaXN0YWtlcywg
+	c2VjcmV0IGhhbmRsaW5nLCB1bnNhZmUgZGVzZXJpYWxpemF0aW9uLCB1bnNhZmUgZGVm
+	YXVsdHMsIFRPQ1RPVS5cbiAgMy4gUmVsaWFiaWxpdHkgJiBwZXJmb3JtYW5jZSDigJQg
+	YmxvY2tpbmcgdGhlIHdyb25nIHRocmVhZCwgdW5ib3VuZGVkIHJlc291cmNlIHVzZSwg
+	YWNjaWRlbnRhbCBPKE7CsiksIHJldHJpZXMgd2l0aG91dCBiYWNrb2ZmLCBzaWxlbnQg
+	ZmFpbHVyZSBwYXRocy5cbiAgNC4gQ29udHJhY3QgcmlzayDigJQgYmVoYXZpb3IgY2hh
+	bmdlcyBjYWxsZXJzIHJlbHkgb24sIHNpbGVudGx5IGNoYW5nZWQgZGVmYXVsdHMsIGJy
+	b2tlbiBiYWNrd2FyZCBjb21wYXRpYmlsaXR5LCBtaXNzaW5nIG1pZ3JhdGlvbnMuXG5c
+	bkZvciBlYWNoIGZpbmRpbmcgY2l0ZSBgZmlsZTpsaW5lYCwgZXhwbGFpbiAqd2h5KiBp
+	dCBpcyB3cm9uZyAobm90IHdoYXQgdGhlIGNvZGUgZG9lcyksIGFuZCBwcm9wb3NlIGEg
+	Y29uY3JldGUgZml4IHdoZW4gb25lIGlzIG9idmlvdXMuIEJlIGNhbGlicmF0ZWQ6IGlm
+	IGEgZmluZGluZyBpcyBub3QgaGlnaC1jb25maWRlbmNlLCBzYXkgc28gb3Igc2tpcCBp
+	dC4gVmVyaWZ5IGNsYWltcyBhZ2FpbnN0IHRoZSBhY3R1YWwgY29kZSByYXRoZXIgdGhh
+	biBpbmZlcnJpbmcgZnJvbSBuYW1lcy5cblxuU2tpcCBwdXJlIHN0eWxlLCBmb3JtYXR0
+	aW5nLCBuYW1pbmcsIGFuZCBhbnl0aGluZyBhIGxpbnRlciBvciBDSSBhbHJlYWR5IGVu
+	Zm9yY2VzLlxuXG5JZiB5b3UgZmluZCBub3RoaW5nIHdvcnRoIGZpeGluZywgc2F5IHNv
+	IHBsYWlubHkuIiwidXVpZCI6IjFBQTlEMDY0LTE3QkQtNEFFQS04RjRGLURENUY5NDc0
+	NEU4RSJ9XQ==
+	</data>
 	<key>Default Bookmark Guid</key>
 	<string>7F8DF99B-4B18-4258-BE6F-592F819A2AAF</string>
+	<key>EnableAPIServer</key>
+	<true/>
 	<key>HTMLTabTitles</key>
 	<false/>
 	<key>HapticFeedbackForEsc</key>
@@ -430,6 +461,53 @@
 			<string>xterm-256color</string>
 			<key>Transparency</key>
 			<real>0.3414082328680203</real>
+			<key>Triggers</key>
+			<array>
+				<dict>
+					<key>action</key>
+					<string>iTermEnterWorkgroupTrigger</string>
+					<key>contentregex</key>
+					<string></string>
+					<key>disabled</key>
+					<false/>
+					<key>eventParams</key>
+					<dict>
+						<key>jobName</key>
+						<string>claude</string>
+					</dict>
+					<key>matchType</key>
+					<integer>113</integer>
+					<key>parameter</key>
+					<string>builtin.claudeCode</string>
+					<key>partial</key>
+					<false/>
+					<key>regex</key>
+					<string></string>
+				</dict>
+				<dict>
+					<key>action</key>
+					<string>iTermExitWorkgroupTrigger</string>
+					<key>contentregex</key>
+					<string></string>
+					<key>disabled</key>
+					<false/>
+					<key>eventParams</key>
+					<dict>
+						<key>jobName</key>
+						<string>claude</string>
+						<key>leaderOnly</key>
+						<true/>
+					</dict>
+					<key>matchType</key>
+					<integer>114</integer>
+					<key>parameter</key>
+					<string></string>
+					<key>partial</key>
+					<false/>
+					<key>regex</key>
+					<string></string>
+				</dict>
+			</array>
 			<key>Unlimited Scrollback</key>
 			<false/>
 			<key>Use Bold Font</key>
@@ -517,10 +595,45 @@
 	<integer>5</integer>
 	<key>TabViewType</key>
 	<integer>1</integer>
+	<key>ToolbeltTools</key>
+	<array>
+		<string>Profiles</string>
+		<string>Session Status</string>
+	</array>
 	<key>UIElementRequiresHotkeys</key>
 	<true/>
 	<key>VisualIndicatorForEsc</key>
 	<false/>
+	<key>Workgroups</key>
+	<data>
+	W3sibmFtZSI6IkNsYXVkZSBDb2RlIiwidW5pcXVlSWRlbnRpZmllciI6ImJ1aWx0aW4u
+	Y2xhdWRlQ29kZSIsInNlc3Npb25zIjpbeyJjb21tYW5kIjoiIiwia2luZCI6eyJraW5k
+	Ijoicm9vdCJ9LCJkaXNwbGF5TmFtZSI6IkNoYXQiLCJwZXJGaWxlQ29tbWFuZCI6IiIs
+	InRvb2xiYXJJdGVtcyI6W3sia2luZCI6Im1vZGVTd2l0Y2hlciJ9LHsia2luZCI6Imdp
+	dFN0YXR1cyJ9LHsia2luZCI6ImF1dG9SZXF1ZXN0UmV2aWV3V2hlbklkbGUifV0sIm1v
+	ZGUiOiJyZWd1bGFyIiwidW5pcXVlSWRlbnRpZmllciI6ImJ1aWx0aW4uY2xhdWRlQ29k
+	ZS5tYWluIiwidXJsU3RyaW5nIjoiIn0seyJjb21tYW5kIjoiZ2l0IGRpZmZ0b29sIC15
+	IC14IHZpbWRpZmYgXFwoZ2l0QmFzZSkiLCJraW5kIjp7ImtpbmQiOiJwZWVyIn0sImRp
+	c3BsYXlOYW1lIjoiRGlmZiIsInBlckZpbGVDb21tYW5kIjoiZ2l0IGRpZmZ0b29sIC15
+	IC14IHZpbWRpZmYgXFwoZ2l0QmFzZSkgLS0gXFwoZmlsZSkiLCJ0b29sYmFySXRlbXMi
+	Olt7ImtpbmQiOiJtb2RlU3dpdGNoZXIifSx7ImtpbmQiOiJjaGFuZ2VkRmlsZVNlbGVj
+	dG9yIn0seyJraW5kIjoiZ2l0QmFzZVNlbGVjdG9yIn0seyJyZWxvYWRTaG9ydGN1dCI6
+	eyJzZXJpYWxpemVkIjoiMHg3Mi0weDEwMDAwMC0weGYifSwiZm9yd2FyZFNob3J0Y3V0
+	Ijp7InNlcmlhbGl6ZWQiOiIweGY3MDMtMHgzNDAwMDAtMHg3YyJ9LCJiYWNrU2hvcnRj
+	dXQiOnsic2VyaWFsaXplZCI6IjB4ZjcwMi0weDM0MDAwMC0weDdiIn0sImtpbmQiOiJu
+	YXZpZ2F0aW9uIn1dLCJtb2RlIjoiZGlmZiIsInVuaXF1ZUlkZW50aWZpZXIiOiJidWls
+	dGluLmNsYXVkZUNvZGUuZGlmZiIsInVybFN0cmluZyI6IiIsInBhcmVudElEIjoiYnVp
+	bHRpbi5jbGF1ZGVDb2RlLm1haW4ifSx7ImNvbW1hbmQiOiJjbGF1ZGUgXFwoY29kZVJl
+	dmlld1Byb21wdCkgLS1hcHBlbmQtc3lzdGVtLXByb21wdC1maWxlICdcXChjb2RlUmV2
+	aWV3U3lzdGVtUHJvbXB0RmlsZSknIC0tc2V0dGluZ3MgJ1xcKGNvZGVSZXZpZXdTZXR0
+	aW5nc0ZpbGUpJyIsImtpbmQiOnsia2luZCI6InBlZXIifSwiZGlzcGxheU5hbWUiOiJD
+	b2RlIFJldmlldyIsInBlckZpbGVDb21tYW5kIjoiIiwidG9vbGJhckl0ZW1zIjpbeyJr
+	aW5kIjoibW9kZVN3aXRjaGVyIn0seyJzaG9ydGN1dCI6eyJzZXJpYWxpemVkIjoiMHg3
+	Mi0weDEwMDAwMC0weGYifSwia2luZCI6InJlbG9hZCJ9LHsia2luZCI6ImF1dG9TZW5k
+	Q2xpcHBpbmdzV2hlbklkbGUifV0sIm1vZGUiOiJjb2RlUmV2aWV3IiwidW5pcXVlSWRl
+	bnRpZmllciI6ImJ1aWx0aW4uY2xhdWRlQ29kZS5yZXZpZXciLCJ1cmxTdHJpbmciOiIi
+	LCJwYXJlbnRJRCI6ImJ1aWx0aW4uY2xhdWRlQ29kZS5tYWluIn1dfV0=
+	</data>
 	<key>findMode_iTerm</key>
 	<integer>0</integer>
 </dict>
